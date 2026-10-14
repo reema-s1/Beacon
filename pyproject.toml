@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "beacon"
+version = "0.1.0"
+description = "AI support copilot for an Airflow data platform"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7,<3",
+    "pydantic-settings>=2.3",
+    "sqlalchemy>=2.0,<3",
+    "psycopg[binary]>=3.1",
+    "httpx>=0.27",
+    "openai>=1.40",
+    "prometheus-client>=0.20",
+    "pyyaml>=6",
+    "numpy>=1.26",
+    "faiss-cpu>=1.8",
+    "sentence-transformers>=3.0",
+    "slack-bolt>=1.20",
+    "slack-sdk>=3.31",
+    "mcp>=1.9",
+    "docker>=7.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "respx>=0.21", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+beacon-api = "beacon.api.main:run"
+beacon-slack = "beacon_slack.app:main"
+beacon-mcp = "beacon_mcp.server:main"
+beacon-chaos = "chaos.cli:main"
+beacon-eval = "eval.run:main"
+
+[tool.setuptools.packages.find]
+include = ["beacon*", "chaos*", "eval*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]
