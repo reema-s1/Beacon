@@ -1,0 +1,60 @@
+groups:
+  - name: airflow-platform
+    rules:
+      # A counter series that appears for the first time has no earlier sample, so
+      # increase() alone misses the very first failure of a DAG. The `unless ... offset`
+      # branch catches series that did not exist five minutes ago.
+      - alert: DagRunFailed
+        expr: |
+          (
+            sum by (dag_id) (increase(airflow_dagrun_duration_count{status="failed"}[5m])) > 0
+          )
+          or
+          (
+            sum by (dag_id) (airflow_dagrun_duration_count{status="failed"})
+            unless sum by (dag_id) (airflow_dagrun_duration_count{status="failed"} offset 5m)
+          )
+        labels:
+          severity: page
+        annotations:
+          summary: "DAG {{ $labels.dag_id }} had a failed run in the last 5 minutes"
+
+      - alert: TaskFailureSpike
+        expr: |
+          sum by (dag_id, task_id) (increase(airflow_ti_finish{state="failed"}[15m])) >= 3
+        labels:
+          severity: page
+        annotations:
+          summary: "Task {{ $labels.dag_id }}.{{ $labels.task_id }} failed {{ $value | humanize }} times in 15 minutes"
+
+      - alert: SLAMissed
+        expr: |
+          (increase(airflow_sla_missed[10m]) > 0)
+          or
+          (airflow_sla_missed unless airflow_sla_missed offset 10m)
+        labels:
+          severity: warn
+        annotations:
+          summary: "An Airflow task missed its SLA"
+
+      - alert: SchedulerHeartbeatMissing
+        expr: changes(airflow_scheduler_heartbeat[1m]) == 0
+        labels:
+          severity: page
+        annotations:
+          summary: "No Airflow scheduler heartbeat for 60 seconds"
+
+      - alert: TaskDurationAnomaly
+        expr: |
+          (
+            histogram_quantile(0.95, sum by (le, dag_id, task_id) (rate(airflow_task_duration_bucket[10m])))
+            > 3 * histogram_quantile(0.5, sum by (le, dag_id, task_id) (rate(airflow_task_duration_bucket[6h])))
+          )
+          and
+          (
+            histogram_quantile(0.95, sum by (le, dag_id, task_id) (rate(airflow_task_duration_bucket[10m]))) > 5
+          )
+        labels:
+          severity: warn
+        annotations:
+          summary: "Task {{ $labels.dag_id }}.{{ $labels.task_id }} is running much slower than its baseline"

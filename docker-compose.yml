@@ -1,0 +1,183 @@
+name: beacon
+
+x-airflow: &airflow
+  build: ./airflow
+  image: beacon-airflow:local
+  environment: &airflow-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+    AIRFLOW__CORE__FERNET_KEY: "Kz7d1yJ0p0aT7c9V1rS3n3oQyQm5bS2h8gY1v0LkZxY="
+    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+    AIRFLOW__WEBSERVER__SECRET_KEY: beacon-demo-secret
+    AIRFLOW__WEBSERVER__WORKERS: "2"
+    AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: "30"
+    AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC: "5"
+    AIRFLOW__METRICS__STATSD_ON: "true"
+    AIRFLOW__METRICS__STATSD_HOST: statsd-exporter
+    AIRFLOW__METRICS__STATSD_PORT: "9125"
+    AIRFLOW__METRICS__STATSD_PREFIX: airflow
+    AIRFLOW_CONN_WAREHOUSE_DB: postgresql://warehouse:warehouse@postgres:5432/warehouse
+    UPSTREAM_URL: http://upstream-mock:8000
+    TASK_MEMORY_LIMIT_MB: "300"
+  volumes:
+    - airflow-data:/opt/airflow/data
+    - airflow-logs:/opt/airflow/logs
+  depends_on: &airflow-depends
+    postgres:
+      condition: service_healthy
+
+x-beacon: &beacon
+  build: .
+  image: beacon:local
+  env_file:
+    - path: .env
+      required: false
+  environment: &beacon-env
+    BEACON_DATABASE_URL: postgresql+psycopg://beacon:beacon@postgres:5432/beacon
+    AIRFLOW_URL: http://airflow-webserver:8080
+    AIRFLOW_USER: admin
+    AIRFLOW_PASSWORD: admin
+    PROMETHEUS_URL: http://prometheus:9090
+    BEACON_API_URL: http://beacon-api:8000
+    UPSTREAM_URL: http://upstream-mock:8000
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 20
+
+  airflow-init:
+    <<: *airflow
+    entrypoint: ["/bin/bash", "/opt/airflow/entrypoint-init.sh"]
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow
+    command: webserver
+    ports: ["8080:8080"]
+    depends_on:
+      <<: *airflow-depends
+      airflow-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/health"]
+      interval: 15s
+      retries: 20
+    restart: unless-stopped
+
+  airflow-scheduler:
+    <<: *airflow
+    command: scheduler
+    # Small, size-limited volume used by report_export (the disk_full scenario fills it).
+    tmpfs:
+      - /opt/airflow/reports:size=8m,uid=50000
+    depends_on:
+      <<: *airflow-depends
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  upstream-mock:
+    build: ./upstream_mock
+    image: beacon-upstream-mock:local
+    ports: ["8300:8000"]
+    environment:
+      SLOW_DELAY_SECONDS: "30"
+
+  statsd-exporter:
+    image: prom/statsd-exporter:v0.28.0
+    command: ["--statsd.mapping-config=/etc/statsd/mapping.yml"]
+    volumes:
+      - ./statsd/mapping.yml:/etc/statsd/mapping.yml:ro
+    ports: ["9102:9102"]
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    ports: ["9090:9090"]
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports: ["9093:9093"]
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/platform-health.json
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3001:3000"]
+
+  beacon-api:
+    <<: *beacon
+    command: ["beacon-api"]
+    ports: ["8100:8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      retries: 30
+    restart: unless-stopped
+
+  beacon-slack:
+    <<: *beacon
+    command: ["beacon-slack"]
+    depends_on:
+      beacon-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beacon-mcp:
+    <<: *beacon
+    command: ["beacon-mcp", "--transport", "http", "--host", "0.0.0.0", "--port", "8200"]
+    ports: ["8200:8200"]
+    restart: unless-stopped
+
+  # On-demand tools container for chaos and evaluation:
+  #   docker compose run --rm tools beacon-chaos inject bad_code
+  #   docker compose run --rm tools beacon-eval --runs 30 --seed 42
+  tools:
+    <<: *beacon
+    profiles: ["tools"]
+    command: ["beacon-chaos", "list"]
+    environment:
+      <<: *beacon-env
+      COMPOSE_PROJECT_NAME: beacon
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./eval/results:/app/eval/results
+
+volumes:
+  pgdata:
+  airflow-data:
+  airflow-logs:
+  prometheus-data:
