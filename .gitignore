@@ -9,5 +9,3 @@ venv/
 .mypy_cache/
 build/
 dist/
-eval/results/*.json
-!eval/results/.gitkeep

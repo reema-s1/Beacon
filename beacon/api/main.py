@@ -145,16 +145,14 @@ def create_app(service: IncidentService | None = None, warm_retriever: bool = Tr
         return await tools.get_platform_status()
 
     @app.post("/actions/rerun")
-    async def rerun(req: RerunRequest, request: Request):
+    async def rerun(req: RerunRequest):
         dag_id, run_id, task_id = req.dag_id, req.run_id, req.task_id
-        inc_snapshot = None
         if req.incident_id is not None:
             with session() as db:
                 inc = db.get(Incident, req.incident_id)
                 if inc is None:
                     raise HTTPException(404, "incident not found")
                 dag_id, run_id, task_id = dag_id or inc.dag_id, run_id or inc.run_id, task_id or inc.task_id
-                inc_snapshot = inc.to_dict()
         if not (dag_id and run_id and task_id):
             raise HTTPException(422, "dag_id, run_id and task_id are required")
         try:
@@ -164,9 +162,6 @@ def create_app(service: IncidentService | None = None, warm_retriever: bool = Tr
         except UpstreamError as exc:
             raise HTTPException(502, f"Airflow rejected the rerun: {exc}")
         log.info("rerun by %s: %s", req.user_id, result)
-        if inc_snapshot:
-            await svc(request).notifier.post_thread(
-                inc_snapshot, f"🔁 <@{req.user_id}> reran `{task_id}`; cleared: {', '.join(result['cleared_tasks']) or 'none'}")
         return result
 
     @app.get("/incidents")
