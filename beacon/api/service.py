@@ -181,6 +181,7 @@ class IncidentService:
             for inc in rows:
                 inc.status, inc.resolved_at = "resolved", utcnow()
             db.commit()
+            metrics.INCIDENTS_RESOLVED.inc(len(rows))
             snapshots = [i.to_dict() for i in rows]
         for snap in snapshots:
             runbook = self.runbook_lookup(snap["runbook_id"]) if snap.get("runbook_id") else None
