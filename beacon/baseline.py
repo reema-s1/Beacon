@@ -14,7 +14,7 @@ RULES: list[tuple[re.Pattern, RootCause]] = [
     (re.compile(r"SchedulerHeartbeatMissing|scheduler[^\n]{0,40}unhealthy|no scheduler heartbeat", re.I),
      RootCause.scheduler_unhealthy),
     (re.compile(r"No space left on device|Errno 28|disk (?:is )?full", re.I), RootCause.storage_full),
-    (re.compile(r"SIGKILL|MemoryError|out of memory|\bOOM\b|Killed", re.I), RootCause.resource_limit),
+    (re.compile(r"SIGKILL|return code -9|MemoryError|out of memory|\bOOM\b|Killed", re.I), RootCause.resource_limit),
     (re.compile(r"password authentication failed|could not connect to server|OperationalError|"
                 r"conn_id `?\w+`? isn't defined|connection to server .* failed", re.I),
      RootCause.credentials_or_connection),

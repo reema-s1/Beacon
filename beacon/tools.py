@@ -75,8 +75,9 @@ _LOG_NOISE = re.compile(
     r"Dependencies all met|Starting attempt|Executing <Task|Running <TaskInstance|"
     r"Started process|Job \d+: Subtask|Exporting env vars|Tmp dir root location|"
     r"Pre task execution logs|Post task execution logs|::group::|::endgroup::|Filling up the DagBag|"
-    r"Setting task instance|Marking task as|Task is in the 'running' state|Using connection ID|"
-    r"\*\*\* Found local files|\*\*\* Reading local file|\*\*\* Log file does not exist")
+    r"Setting task instance|Task is in the 'running' state|"
+    r"\*\*\* Found local files|\*\*\* Reading local file|\*\*\* Log file does not exist|"
+    r"Running: \[|downstream tasks scheduled from follow-on|AIRFLOW_CTX_")
 _LOG_PREFIX = re.compile(r"^\[(\d{4}-\d\d-\d\dT[\d:.]+[+-]\d{4})\] \{[^}]+\} ")
 
 

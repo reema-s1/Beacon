@@ -8,27 +8,31 @@ version = "0.1.0"
 description = "AI support copilot for an Airflow data platform"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.115,<1",
-    "uvicorn[standard]>=0.30",
-    "pydantic>=2.7,<3",
-    "pydantic-settings>=2.3",
-    "sqlalchemy>=2.0,<3",
-    "psycopg[binary]>=3.1",
-    "httpx>=0.27",
-    "openai>=1.40",
-    "prometheus-client>=0.20",
-    "pyyaml>=6",
-    "numpy>=1.26",
-    "faiss-cpu>=1.8",
-    "sentence-transformers>=3.0",
-    "slack-bolt>=1.20",
-    "slack-sdk>=3.31",
-    "mcp>=1.9",
-    "docker>=7.1",
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.32.1",
+    "pydantic==2.10.4",
+    "pydantic-settings==2.7.0",
+    "sqlalchemy==2.0.36",
+    "psycopg[binary]==3.2.3",
+    "httpx==0.28.1",
+    "openai==1.58.1",
+    "prometheus-client==0.21.1",
+    "pyyaml==6.0.2",
+    "numpy==2.2.1",
+    "faiss-cpu==1.9.0.post1",
+    "torch==2.5.1",
+    "transformers==4.47.1",
+    "sentence-transformers==3.3.1",
+    "slack-bolt==1.21.3",
+    "slack-sdk==3.33.5",
+    "mcp==1.9.4",
+    "starlette==0.41.3",
+    "sse-starlette==2.1.3",
+    "docker==7.1.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "respx>=0.21", "pytest-asyncio>=0.23"]
+dev = ["pytest==8.3.4", "respx==0.22.0", "pytest-asyncio==0.25.0"]
 
 [project.scripts]
 beacon-api = "beacon.api.main:run"
@@ -43,4 +47,5 @@ include = ["beacon*", "chaos*", "eval*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 filterwarnings = ["ignore::DeprecationWarning"]

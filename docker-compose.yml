@@ -5,7 +5,7 @@ x-airflow: &airflow
   image: beacon-airflow:local
   environment: &airflow-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:af-meta-7Qx2@postgres:5432/airflow
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
     AIRFLOW__CORE__FERNET_KEY: "Kz7d1yJ0p0aT7c9V1rS3n3oQyQm5bS2h8gY1v0LkZxY="
@@ -18,7 +18,7 @@ x-airflow: &airflow
     AIRFLOW__METRICS__STATSD_HOST: statsd-exporter
     AIRFLOW__METRICS__STATSD_PORT: "9125"
     AIRFLOW__METRICS__STATSD_PREFIX: airflow
-    AIRFLOW_CONN_WAREHOUSE_DB: postgresql://warehouse:warehouse@postgres:5432/warehouse
+    AIRFLOW_CONN_WAREHOUSE_DB: postgresql://warehouse:wh-load-9Kp4@postgres:5432/warehouse
     UPSTREAM_URL: http://upstream-mock:8000
     TASK_MEMORY_LIMIT_MB: "300"
   volumes:
@@ -35,7 +35,7 @@ x-beacon: &beacon
     - path: .env
       required: false
   environment: &beacon-env
-    BEACON_DATABASE_URL: postgresql+psycopg://beacon:beacon@postgres:5432/beacon
+    BEACON_DATABASE_URL: postgresql+psycopg://beacon:beacon-db-3Rt8@postgres:5432/beacon
     AIRFLOW_URL: http://airflow-webserver:8080
     AIRFLOW_USER: admin
     AIRFLOW_PASSWORD: admin

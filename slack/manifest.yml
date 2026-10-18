@@ -1,0 +1,34 @@
+# Create the app at https://api.slack.com/apps → "Create New App" → "From an app manifest",
+# paste this file, then follow README → Slack setup.
+display_information:
+  name: Beacon
+  description: Support copilot for the data platform
+  background_color: "#1d3557"
+features:
+  bot_user:
+    display_name: beacon
+    always_online: true
+  slash_commands:
+    - command: /status
+      description: Data platform health
+      should_escape: false
+    - command: /why
+      description: Diagnose why a pipeline failed
+      usage_hint: "<dag_id> [run_id]"
+      should_escape: false
+    - command: /runbook
+      description: Search runbooks
+      usage_hint: "<what you are seeing>"
+      should_escape: false
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+      - chat:write.public
+      - commands
+settings:
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false

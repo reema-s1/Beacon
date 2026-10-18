@@ -3,8 +3,7 @@
 Transports: stdio (local clients such as Claude Code / Claude Desktop) and streamable
 HTTP (inside docker compose, served at http://<host>:8200/mcp).
 """
-from __future__ import annotations
-
+# No `from __future__ import annotations`: FastMCP 1.9 inspects real annotation objects.
 import argparse
 import json
 import logging
