@@ -3,7 +3,10 @@ route:
   group_by: ["alertname", "dag_id", "task_id"]
   group_wait: 5s
   group_interval: 30s
-  repeat_interval: 4h
+  # Re-notify every minute while an alert keeps firing. beacon-api dedupes on
+  # fingerprint + run id, so repeats for the same run are dropped, while a *new*
+  # failed run of a DAG whose alert is still firing becomes a new incident.
+  repeat_interval: 1m
 
 receivers:
   - name: beacon

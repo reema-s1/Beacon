@@ -19,6 +19,11 @@ os.environ.update({
     "RERUN_ALLOWED_USERS": "UALLOWED",
     "AGENT_MAX_STEPS": "8",
 })
+# Prefer the copy saved by scripts/fetch_model.py (no network needed); otherwise the
+# retrieval tests download the model from Hugging Face once.
+_LOCAL_MODEL = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models", "all-MiniLM-L6-v2")
+if os.path.exists(os.path.join(_LOCAL_MODEL, "config.json")):
+    os.environ["EMBEDDING_MODEL"] = _LOCAL_MODEL
 
 import json  # noqa: E402
 from dataclasses import dataclass, field  # noqa: E402

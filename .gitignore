@@ -9,3 +9,5 @@ venv/
 .mypy_cache/
 build/
 dist/
+models/*
+!models/.gitkeep
