@@ -37,6 +37,31 @@ async def test_get_task_logs_defaults_to_latest_try_filters_noise_and_masks_secr
     assert "postgresql://warehouse:***@postgres" in text
 
 
+def test_clean_log_hides_library_frames_but_keeps_pipeline_frame_and_exception():
+    log = """[2026-10-22T14:39:55.000+0000] {taskinstance.py:3313} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 768, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/operators/python.py", line 238, in execute
+    return_value = self.execute_callable()
+  File "/opt/airflow/dags/sales_daily_etl.py", line 48, in clean
+    price = float(row[price_field])
+                  ~~~^^^^^^^^^^^^^
+KeyError: 'unit_price_usd'
+d69a9627bbde
+***   * /opt/airflow/logs/dag_id=x/attempt=2.log"""
+    lines, _ = tools.clean_log(log, 40)
+    assert lines == [
+        "14:39:55 ERROR - Task failed with exception",
+        "Traceback (most recent call last):",
+        "  [... 2 library frame(s) hidden ...]",
+        '  File "/opt/airflow/dags/sales_daily_etl.py", line 48, in clean',
+        "    price = float(row[price_field])",
+        "KeyError: 'unit_price_usd'",
+    ]
+
+
 def test_clean_log_keeps_relevant_tail():
     lines, truncated = tools.clean_log("\n".join(f"line {i}" for i in range(100)), 10)
     assert truncated and lines == [f"line {i}" for i in range(90, 100)]

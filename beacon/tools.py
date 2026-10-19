@@ -96,13 +96,37 @@ def _duration(start: str | None, end: str | None) -> float | None:
     return round((e - s).total_seconds(), 1) if s and e else None
 
 
+_FRAME = re.compile(r'^\s*File "([^"]+)", line \d+, in ')
+_LIBRARY_PATH = re.compile(r"/site-packages/|/dist-packages/|/usr/local/lib/python\d|/usr/lib/python\d")
+_CARETS = re.compile(r"^\s*[\^~]+\s*$")
+_LOG_SOURCE = re.compile(r"^\*\*\*|^[0-9a-f]{12}$")
+
+
 def clean_log(text: str, tail_lines: int) -> tuple[list[str], bool]:
-    """Drop Airflow boilerplate and keep the relevant tail of a task log."""
-    lines = []
+    """Drop Airflow boilerplate and keep the relevant tail of a task log.
+
+    Traceback frames inside libraries/the stdlib are collapsed into one marker line, so the
+    tail shows the pipeline's own frame and the exception instead of Airflow internals.
+    """
+    lines: list[str] = []
+    hidden, in_library_frame = 0, False
     for raw in text.splitlines():
         line = raw.rstrip()
-        if not line or _LOG_NOISE.search(line):
+        if not line or _LOG_NOISE.search(line) or _CARETS.match(line) or _LOG_SOURCE.match(line):
             continue
+        frame = _FRAME.match(line)
+        if frame:
+            in_library_frame = bool(_LIBRARY_PATH.search(frame.group(1)))
+            if in_library_frame:
+                hidden += 1
+                continue
+        elif in_library_frame and raw.startswith("    "):
+            continue  # source line of a hidden frame
+        else:
+            in_library_frame = False
+        if hidden:
+            lines.append(f"  [... {hidden} library frame(s) hidden ...]")
+            hidden = 0
         lines.append(_LOG_PREFIX.sub(lambda m: m.group(1)[11:19] + " ", line))
     truncated = len(lines) > tail_lines
     return lines[-tail_lines:], truncated

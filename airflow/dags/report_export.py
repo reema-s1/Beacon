@@ -68,9 +68,8 @@ def report_export():
         log.info("Report written to %s", target)
         return str(target)
 
-    report = build_report()
-    prune_old_reports() >> report
-    write_report(report)
+    # Prune after writing: old reports are only removed once the new one is safely on disk.
+    write_report(build_report()) >> prune_old_reports()
 
 
 report_export()
