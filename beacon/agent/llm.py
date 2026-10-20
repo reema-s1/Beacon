@@ -31,6 +31,9 @@ class ToolCall:
     id: str
     name: str
     arguments: str
+    # Provider-specific fields that must be echoed back verbatim on the next turn
+    # (e.g. Gemini 3's extra_content.google.thought_signature).
+    extra: dict | None = None
 
 
 @dataclass
@@ -45,7 +48,8 @@ class ChatResult:
         msg: dict[str, Any] = {"role": "assistant", "content": self.content or ""}
         if self.tool_calls:
             msg["tool_calls"] = [{"id": tc.id, "type": "function",
-                                  "function": {"name": tc.name, "arguments": tc.arguments}}
+                                  "function": {"name": tc.name, "arguments": tc.arguments},
+                                  **(tc.extra or {})}
                                  for tc in self.tool_calls]
         return msg
 
@@ -95,7 +99,10 @@ class OpenAICompatibleLLM:
     async def chat(self, messages: list[dict], tools: list[dict] | None = None,
                    tool_choice: str | None = None, json_mode: bool = False) -> ChatResult:
         kwargs: dict[str, Any] = {"model": self.model, "messages": messages,
-                                  "temperature": self.settings.llm_temperature, "max_tokens": 1024}
+                                  "temperature": self.settings.llm_temperature,
+                                  "max_tokens": self.settings.llm_max_tokens}
+        if self.settings.llm_reasoning_effort:
+            kwargs["reasoning_effort"] = self.settings.llm_reasoning_effort
         if tools:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = tool_choice or "auto"
@@ -130,7 +137,10 @@ class OpenAICompatibleLLM:
 
         choice = resp.choices[0]
         msg = choice.message
-        calls = [ToolCall(tc.id, tc.function.name, tc.function.arguments or "{}") for tc in (msg.tool_calls or [])]
+        calls = []
+        for tc in msg.tool_calls or []:
+            extra = {k: v for k, v in tc.model_dump(exclude_none=True).items() if k not in ("id", "type", "function")}
+            calls.append(ToolCall(tc.id, tc.function.name, tc.function.arguments or "{}", extra or None))
         usage = resp.usage.model_dump() if resp.usage else None
         return ChatResult(content=msg.content, tool_calls=calls, finish_reason=choice.finish_reason,
                           usage=usage, raw=msg.model_dump(exclude_none=True))

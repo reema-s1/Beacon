@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 6
     llm_temperature: float = 0.0
+    llm_max_tokens: int = 4096  # thinking models count reasoning tokens against this
+    llm_reasoning_effort: str = ""  # optional: low|medium|high for providers that support it
 
     database_url: str = Field("sqlite:///./beacon.db", validation_alias="BEACON_DATABASE_URL")
 

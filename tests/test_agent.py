@@ -146,6 +146,19 @@ async def test_llm_retries_429_respecting_retry_after(monkeypatch):
 
 
 @respx.mock
+async def test_provider_extras_on_tool_calls_are_echoed_back():
+    body = dict(COMPLETION, choices=[{"index": 0, "finish_reason": "tool_calls", "message": {
+        "role": "assistant", "content": None, "tool_calls": [{
+            "id": "c1", "type": "function", "function": {"name": "get_platform_status", "arguments": "{}"},
+            "extra_content": {"google": {"thought_signature": "sig-123"}}}]}}])
+    respx.post("http://llm.test/v1/chat/completions").respond(json=body)
+    result = await OpenAICompatibleLLM(LLM_SETTINGS).chat([{"role": "user", "content": "hi"}])
+    echoed = result.assistant_message()["tool_calls"][0]
+    assert echoed["extra_content"] == {"google": {"thought_signature": "sig-123"}}
+    assert echoed["function"]["name"] == "get_platform_status"
+
+
+@respx.mock
 async def test_llm_gives_up_after_max_retries(monkeypatch):
     async def fake_sleep(s):
         return None
