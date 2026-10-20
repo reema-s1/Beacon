@@ -74,7 +74,7 @@ flowchart LR
 
 ### beacon-slack
 
-A Bolt app in Socket Mode. `/status`, `/why <dag_id> [run_id]` and `/runbook <query>`, plus
+A Bolt app in Socket Mode. `/platform-status`, `/why <dag_id> [run_id]` and `/runbook <query>`, plus
 the incident buttons (Rerun → confirmation modal → allowlist check → `POST /actions/rerun`;
 Acknowledge; Helpful/Not helpful; Show evidence). Handlers are plain functions in
 `beacon_slack/handlers.py` so they can be unit-tested. Every path answers the user, including

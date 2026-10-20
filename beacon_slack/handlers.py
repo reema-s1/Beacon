@@ -192,7 +192,7 @@ class Handlers:
 
 
 def register(app: Any, handlers: Handlers) -> None:
-    app.command("/status")(handlers.status)
+    app.command("/platform-status")(handlers.status)
     app.command("/why")(handlers.why)
     app.command("/runbook")(handlers.runbook)
     app.action("rerun_task")(handlers.open_rerun)

@@ -28,7 +28,7 @@ def action_body(action_id, user="UALLOWED", value="7"):
             "actions": [{"action_id": action_id, "value": value}]}
 
 
-# ── /status ───────────────────────────────────────────────────────────────────
+# ── /platform-status ───────────────────────────────────────────────────────────────────
 
 def test_status_posts_health_blocks():
     h, api, _ = setup()
@@ -172,7 +172,7 @@ def test_register_wires_every_handler():
     register(app, setup()[0])
     commands = {c.args[0] for c in app.command.call_args_list}
     actions = {c.args[0] for c in app.action.call_args_list}
-    assert commands == {"/status", "/why", "/runbook"}
+    assert commands == {"/platform-status", "/why", "/runbook"}
     assert actions == {"rerun_task", "acknowledge", "feedback_helpful", "feedback_not_helpful", "show_evidence"}
     app.view.assert_called_once_with("rerun_confirm")
 

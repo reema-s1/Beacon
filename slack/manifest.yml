@@ -9,7 +9,8 @@ features:
     display_name: beacon
     always_online: true
   slash_commands:
-    - command: /status
+    # /status is reserved by Slack, so the health command is /platform-status.
+    - command: /platform-status
       description: Data platform health
       should_escape: false
     - command: /why
