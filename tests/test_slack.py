@@ -194,3 +194,10 @@ def test_api_client_turns_errors_into_readable_messages():
         raise AssertionError("expected BeaconAPIError")
     except BeaconAPIError as exc:
         assert "not allowed" in str(exc)
+
+
+def test_real_notifier_builds_async_slack_client():
+    from beacon.api.notifier import SlackNotifier
+    from beacon.config import Settings
+    n = SlackNotifier(Settings(slack_bot_token="xoxb-test", slack_incident_channel="C1"))
+    assert n.enabled and n.client.__class__.__name__ == "AsyncWebClient"
