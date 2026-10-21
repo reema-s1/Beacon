@@ -159,6 +159,21 @@ async def test_provider_extras_on_tool_calls_are_echoed_back():
 
 
 @respx.mock
+async def test_llm_reads_retry_delay_from_gemini_error_body(monkeypatch):
+    sleeps = []
+
+    async def fake_sleep(s):
+        sleeps.append(s)
+    monkeypatch.setattr("beacon.agent.llm.asyncio.sleep", fake_sleep)
+    gemini_429 = [{"error": {"code": 429, "message": "Quota exceeded ... Please retry in 14.1s.", "details": [
+        {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "14s"}]}}]
+    respx.post("http://llm.test/v1/chat/completions").mock(side_effect=[
+        httpx.Response(429, json=gemini_429), httpx.Response(200, json=COMPLETION)])
+    await OpenAICompatibleLLM(LLM_SETTINGS).chat([{"role": "user", "content": "hi"}])
+    assert 14 <= sleeps[0] < 15
+
+
+@respx.mock
 async def test_llm_gives_up_after_max_retries(monkeypatch):
     async def fake_sleep(s):
         return None

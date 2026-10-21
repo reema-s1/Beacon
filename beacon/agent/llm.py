@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import re
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -81,6 +82,10 @@ def _retry_after_seconds(exc: openai.APIStatusError) -> float | None:
                     num = ""
             if total:
                 return total
+    # Gemini puts the delay in the error body instead: RetryInfo.retryDelay / "Please retry in 14.1s".
+    match = re.search(r'retryDelay"?\s*[:=]\s*"?([\d.]+)s|retry in ([\d.]+)s', str(getattr(exc, "body", "")) + str(exc))
+    if match:
+        return float(match.group(1) or match.group(2))
     return None
 
 
