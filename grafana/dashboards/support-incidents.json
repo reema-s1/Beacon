@@ -141,7 +141,8 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -259,7 +260,7 @@
       "gridPos": {
         "x": 0,
         "y": 8,
-        "w": 8,
+        "w": 9,
         "h": 6
       },
       "targets": [
@@ -288,14 +289,16 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "decimals": 0
         },
         "overrides": []
       },
       "options": {
         "colorMode": "value",
         "graphMode": "none",
-        "textMode": "value_and_name"
+        "textMode": "value_and_name",
+        "orientation": "horizontal"
       }
     },
     {
@@ -308,9 +311,9 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 8,
+        "x": 9,
         "y": 8,
-        "w": 4,
+        "w": 3,
         "h": 6
       },
       "targets": [

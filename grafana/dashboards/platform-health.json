@@ -261,7 +261,8 @@
           "legendFormat": "",
           "refId": "A",
           "range": false,
-          "instant": true
+          "instant": true,
+          "format": "table"
         }
       ],
       "fieldConfig": {
@@ -270,10 +271,6 @@
       },
       "options": {},
       "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {}
-        },
         {
           "id": "organize",
           "options": {
@@ -374,18 +371,39 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sort_desc(sum by (dag_id, task_id) (increase(airflow_ti_finish{state=\"failed\"}[1h])) > 0)",
+          "expr": "sort_desc(round(sum by (dag_id, task_id) (increase(airflow_ti_finish{state=\"failed\"}[1h]))) > 0)",
           "legendFormat": "",
           "refId": "A",
           "range": false,
-          "instant": true
+          "instant": true,
+          "format": "table"
         }
       ],
       "fieldConfig": {
         "defaults": {},
         "overrides": []
       },
-      "options": {}
+      "options": {},
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "alertstate": true
+            }
+          }
+        },
+        {
+          "id": "renameByName",
+          "options": {
+            "renameByName": {
+              "Value": "failures"
+            }
+          }
+        }
+      ]
     }
   ],
   "templating": {
