@@ -24,7 +24,7 @@ class Platform:
     def __init__(self, project: str | None = None):
         s = get_settings()
         self.airflow = httpx.Client(base_url=s.airflow_url.rstrip("/") + "/api/v1",
-                                    auth=(s.airflow_user, s.airflow_password), timeout=20.0)
+                                    auth=(s.airflow_user, s.airflow_password), timeout=60.0)
         self.upstream_url = s.upstream_url.rstrip("/")
         self.project = project or os.getenv("COMPOSE_PROJECT_NAME", "beacon")
         self._docker = None
@@ -32,7 +32,14 @@ class Platform:
     # ── Airflow ───────────────────────────────────────────────────────────────
 
     def _af(self, method: str, path: str, ok: tuple[int, ...] = (), **kw) -> dict:
-        resp = self.airflow.request(method, path, **kw)
+        for attempt in range(4):
+            try:
+                resp = self.airflow.request(method, path, **kw)
+                break
+            except httpx.TransportError as exc:  # webserver busy or restarting
+                if attempt == 3:
+                    raise PlatformError(f"Airflow {method} {path} unreachable: {exc!r}") from exc
+                time.sleep(5 * (attempt + 1))
         if resp.status_code >= 400 and resp.status_code not in ok:
             raise PlatformError(f"Airflow {method} {path} -> {resp.status_code}: {resp.text[:200]}")
         return resp.json() if resp.content and resp.status_code < 400 else {}

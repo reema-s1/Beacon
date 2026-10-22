@@ -116,6 +116,14 @@ def run_one(i: int, sc: Scenario, platform: Platform, api: httpx.Client, timeout
     return record
 
 
+def error_record(i: int, sc: Scenario, exc: Exception) -> dict:
+    return {"run": i, "scenario": sc.name, "ground_truth": sc.ground_truth_cause,
+            "expected_runbook": sc.expected_runbook, "timed_out": True, "harness_error": repr(exc)[:300],
+            "agent_root_cause": None, "agent_runbook": None, "agent_cause_correct": False,
+            "agent_runbook_correct": False, "baseline_root_cause": None, "baseline_runbook": None,
+            "baseline_cause_correct": False, "baseline_runbook_correct": False}
+
+
 def recover(platform: Platform, sc: Scenario) -> None:
     for step in reset(platform):
         log(f"  reset: {step}")
@@ -196,6 +204,9 @@ def markdown_report(summary: dict, records: list[dict], meta: dict) -> str:
         out.append("None: every run got both the root cause and the runbook right.")
     for r in misses:
         out += [f"### Run {r['run']}: {r['scenario']} (expected `{r['ground_truth']}` / `{r['expected_runbook']}`)", ""]
+        if r.get("harness_error"):
+            out += [f"The evaluation harness failed on this run: `{r['harness_error']}`", ""]
+            continue
         if r["timed_out"]:
             out += ["No triaged incident arrived before the timeout.", ""]
             continue
@@ -240,6 +251,9 @@ def main(argv: list[str] | None = None) -> int:
             sc = rng.choice(pool)
             try:
                 records.append(run_one(i, sc, platform, api, args.timeout))
+            except Exception as exc:  # one broken run must not end the evaluation
+                log(f"run {i}: harness error, scored as a miss: {exc!r}")
+                records.append(error_record(i, sc, exc))
             finally:
                 recover(platform, sc)
             summary = summarise(records)

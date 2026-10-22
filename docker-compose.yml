@@ -11,7 +11,7 @@ x-airflow: &airflow
     AIRFLOW__CORE__FERNET_KEY: "Kz7d1yJ0p0aT7c9V1rS3n3oQyQm5bS2h8gY1v0LkZxY="
     AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
     AIRFLOW__WEBSERVER__SECRET_KEY: beacon-demo-secret
-    AIRFLOW__WEBSERVER__WORKERS: "2"
+    AIRFLOW__WEBSERVER__WORKERS: "4"
     AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: "30"
     AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC: "5"
     AIRFLOW__METRICS__STATSD_ON: "true"
