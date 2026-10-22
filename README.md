@@ -1,20 +1,34 @@
-# Beacon — AI support copilot for a data platform
+# Beacon
 
-When a data pipeline breaks, the people who own it often find out late, from someone
-downstream. Then they spend twenty minutes in Airflow logs only to learn it was "just" an
-upstream API being down. Beacon closes that gap:
+**An AI support copilot for an Airflow data platform.** When a pipeline breaks, Beacon notices,
+investigates the logs and metrics with a tool-using LLM agent, and posts a plain-English
+diagnosis to Slack, with the evidence and the runbook to fix it.
 
-1. **Detects** failures: Prometheus alert rules on Airflow metrics.
-2. **Investigates** them: an LLM agent with read-only tools reads run history, task logs,
-   metrics and runbooks.
-3. **Explains** them: a plain-English summary in Slack with the likely cause, the evidence and
-   the matching runbook.
-4. **Lets users help themselves**: `/platform-status`, `/why <dag>` and `/runbook <query>` in
-   Slack, plus a human-confirmed, allowlisted **Rerun task** button.
-5. **Shows trends**: two Grafana dashboards, one for pipeline owners and one for support.
+![Platform Health dashboard during a live upstream outage](docs/img/demo.gif)
 
-The same investigation tools are exposed as an **MCP server**, and every agent run is traced
-into **Pulse**.
+**Results:** 30 fault-injection runs end to end; the root cause and runbook were right in all 30.
+Median time from fault to Slack post: 61 s. ([details](#evaluation))
+
+---
+
+## Why
+
+Pipeline owners usually learn about failures late, from someone downstream. Then they spend
+twenty minutes in Airflow logs to discover it was "just" an upstream API being down. Beacon
+closes that gap:
+
+| | |
+|---|---|
+| **Detect** | Prometheus alert rules on Airflow metrics (failed runs, failure spikes, SLA misses, scheduler heartbeat, slow tasks) |
+| **Investigate** | An LLM agent with seven read-only tools reads run history, task logs, metrics and runbooks |
+| **Explain** | A Slack post written for the pipeline owner: what broke, who is affected, likely cause + confidence, evidence, runbook steps |
+| **Self-serve** | `/platform-status`, `/why <dag>`, `/runbook <query>`, plus a human-confirmed, allowlisted **Rerun task** button |
+| **Observe** | Two Grafana dashboards, and every agent run traced as spans |
+
+The same tools are also exposed through an **MCP server**, so any MCP client can investigate
+the platform interactively.
+
+## How it works
 
 ```mermaid
 flowchart LR
@@ -33,34 +47,54 @@ flowchart LR
     end
     API -->|incident post| S
     S <--> BS
-    AG -->|spans| PU[Pulse]
+    AG -->|spans| PU[Pulse tracing]
 ```
 
-More detail: [ARCHITECTURE.md](ARCHITECTURE.md) · [DECISIONS.md](DECISIONS.md) ·
-[WALKTHROUGH.md](WALKTHROUGH.md)
+1. A chaos CLI breaks the platform in one of eight realistic ways (bad code, missing input,
+   upstream down or slow, bad credentials, out of memory, scheduler down, disk full).
+2. Airflow metrics trip a Prometheus alert. Alertmanager calls `beacon-api`, which finds
+   the failed run, deduplicates it, and opens an incident.
+3. The agent investigates with read-only tools (at most 8 steps). It must return
+   schema-validated JSON (cause, confidence, evidence, runbook) or say "unknown".
+4. The diagnosis is posted to Slack. When the alert resolves, the post is updated.
 
-![Platform Health dashboard during a live upstream outage](docs/img/demo.gif)
+**Safety by design:** the agent can only read. Rerunning a task requires a button click, a
+confirmation modal and an allowlisted user, checked in both the bot and the API. PromQL is
+range- and size-capped, no tool can run shell commands, and secrets are masked before
+anything reaches the LLM or Slack.
 
-## Evaluation results
+More detail: [ARCHITECTURE.md](ARCHITECTURE.md) (components and data flow) ·
+[DECISIONS.md](DECISIONS.md) (trade-offs) · [WALKTHROUGH.md](WALKTHROUGH.md) (one real
+incident, traced step by step)
 
-`beacon-eval --runs 30 --seed 42`, run on 2026-10-22 against the full stack, real alerting
-path included. The model was `gemini-3.5-flash-lite` (Gemini free tier, `LLM_REASONING_EFFORT=low`).
-Each run injects a random scenario, waits for the triaged incident, scores it, resets, and
-waits for the platform to be healthy. Raw data:
-[`eval/results/20261022T190517Z.json`](eval/results/20261022T190517Z.json); report:
-[`eval/results/20261022T190517Z.md`](eval/results/20261022T190517Z.md).
+## Tech stack
+
+Python 3.11 · FastAPI · Pydantic v2 · SQLAlchemy 2 · Apache Airflow 2.10 · Prometheus ·
+Alertmanager · Grafana · Postgres · sentence-transformers (MiniLM) + FAISS · Slack Bolt
+(Socket Mode) · MCP Python SDK (FastMCP) · OpenAI-compatible LLM client (Groq / Gemini /
+Ollama) · Docker Compose · pytest + respx
+
+## Evaluation
+
+`beacon-eval --runs 30 --seed 42` injects a random fault, waits for Beacon's diagnosis to
+arrive through the real alerting path, scores it against the recorded ground truth, resets,
+and repeats. It also runs a rule-based (regex) baseline on the same logs.
+
+Model: `gemini-3.5-flash-lite` (Gemini free tier). Raw data:
+[`eval/results/20261022T190517Z.json`](eval/results/20261022T190517Z.json) · report:
+[`eval/results/20261022T190517Z.md`](eval/results/20261022T190517Z.md)
 
 | | Root cause | Runbook |
 |---|---|---|
-| **Beacon agent** | **100%** (30/30) | **100%** (30/30) |
-| Rule-based baseline | 100% (30/30) | 100% (30/30) |
+| **Beacon agent** | **30/30 (100%)** | **30/30 (100%)** |
+| Rule-based baseline | 30/30 (100%) | 30/30 (100%) |
 
 | Latency | p50 | p95 |
 |---|---|---|
 | Fault injected → diagnosis posted in Slack | 61.4 s | 111.7 s |
-| Alert received → diagnosis posted (triage) | 14.4 s | 51.0 s |
+| Alert received → diagnosis posted | 14.4 s | 51.0 s |
 
-| Scenario | Runs | Agent root cause | Agent runbook | Baseline |
+| Scenario | Runs | Agent: cause | Agent: runbook | Baseline |
 |---|---|---|---|---|
 | bad_code | 5 | 5/5 | 5/5 | 5/5 |
 | bad_connection | 6 | 6/6 | 6/6 | 6/6 |
@@ -71,246 +105,180 @@ waits for the platform to be healthy. Raw data:
 | upstream_down | 3 | 3/3 | 3/3 | 3/3 |
 | upstream_slow | 1 | 1/1 | 1/1 | 1/1 |
 
-The confusion matrix is diagonal, with no timeouts and no harness errors. The agent averaged
-3.8 LLM rounds per investigation (cap 8), with mean confidence 0.99 (min 0.95). Nothing hit
-a free-tier rate-limit failure.
+Every run completed with no timeouts. The agent averaged 3.8 LLM steps per investigation
+(cap 8) with mean confidence 0.99.
 
-**How to read this honestly:**
-* The baseline also scores 100%. These eight faults are clean and synthetic, and each leaves
-  one unambiguous error line, which a dozen regexes can match. The evaluation shows the
-  agent is *reliable* on them. It does not show the agent is *needed* for them. What the
-  agent adds over the baseline is the rest of the job: it finds the failed run and task, reads
-  the right log, explains the cause to a pipeline owner in plain English, and picks the
-  runbook. Unlike a fixed rule list, it can also say "unknown" on inputs nobody wrote a rule
-  for (see [DECISIONS.md](DECISIONS.md)).
-* Some scenarios got few draws (`upstream_slow` once, `scheduler_down` twice) because the
-  seeded random choice is uniform over scenarios, not stratified.
-* Most of the end-to-end time is the platform, not the agent. A failing run takes 15–40 s
-  including Airflow's retry, then about 15 s for the scrape and rule evaluation and 5 s of
-  Alertmanager `group_wait`. In the four runs over 90 s, three spent 67–111 s *before* the
-  alert reached Beacon (`scheduler_down` needs 60 s without a heartbeat; the other two
-  waited on the platform). One (#15) had a slow 59 s triage. Beacon logged zero 429s
-  during the run.
+The rule-based baseline gives a deterministic reference point and a regression floor for
+every prompt or model change. On top of classifying the cause, the agent locates the failed
+run and task itself, explains the impact in plain English, and picks the runbook.
 
 | Platform Health | Support & Incidents |
 |---|---|
-| ![Platform Health](docs/img/platform-health.png) | ![Support & Incidents](docs/img/support-incidents.png) |
+| ![Platform Health dashboard](docs/img/platform-health.png) | ![Support & Incidents dashboard](docs/img/support-incidents.png) |
 
 ## Quickstart
 
-Requirements: Docker Desktop (Windows with the WSL2 backend, or macOS) or Docker Engine +
-Compose v2 on Linux. Give Docker about 6 GB of memory.
+Requirements: Docker Desktop (Windows/WSL2 or macOS) or Docker Engine + Compose v2 on Linux,
+with about 6 GB of memory for Docker.
 
 ```bash
-cp .env.example .env          # then add an LLM key (next section)
-docker compose up -d --build  # first build downloads ~2 GB (torch CPU, Airflow image)
+cp .env.example .env           # add an LLM key, see below
+docker compose up -d --build   # first build downloads ~2 GB
 ```
 
 | Service | URL |
 |---|---|
-| Airflow UI / API | http://localhost:8080 (admin / admin) |
-| Grafana | http://localhost:3001 (anonymous viewer; admin / admin to edit) |
+| Airflow | http://localhost:8080 (admin / admin) |
+| Grafana | http://localhost:3001 |
 | beacon-api (Swagger) | http://localhost:8100/docs |
-| beacon-mcp (streamable HTTP) | http://localhost:8200/mcp |
-| Prometheus / Alertmanager | http://localhost:9090 / http://localhost:9093 |
-| upstream-mock | http://localhost:8300/admin/mode |
+| beacon-mcp | http://localhost:8200/mcp |
+| Prometheus / Alertmanager | http://localhost:9090 · http://localhost:9093 |
 
-The five DAGs start running green within a minute. Without an LLM key everything still
-works except the diagnosis: incidents are created and posted with an "unknown — investigate
-manually" message.
+The five DAGs run green within a minute. Beacon degrades gracefully: without an LLM key,
+incidents are still created, deduplicated and posted for manual follow-up.
 
-## Choosing the LLM (free options)
+### Try it
 
-Beacon talks to any OpenAI-compatible endpoint, configured only by `LLM_BASE_URL`,
-`LLM_MODEL` and `LLM_API_KEY`. Switching provider is a `.env` change; no code changes.
-
-**Groq (default):** create a free key at https://console.groq.com/keys (no card). Pick a model
-that supports tool calling from `GET https://api.groq.com/openai/v1/models`.
-```
-LLM_BASE_URL=https://api.groq.com/openai/v1
-LLM_MODEL=<tool-calling model from Groq's list>
-LLM_API_KEY=gsk_...
+```bash
+docker compose run --rm tools beacon-chaos list                  # the 8 scenarios
+docker compose run --rm tools beacon-chaos inject missing_input  # break something
+# ~60-90 s later: an incident post in Slack, with cause, evidence and runbook
+docker compose run --rm tools beacon-chaos reset                 # fix everything
 ```
 
-**Google Gemini free tier:** create a key at https://aistudio.google.com/apikey. The evaluation
-below used `gemini-3.5-flash-lite`. `gemini-3.5-flash` worked too, but its free tier allows
-only 5 requests/minute.
-```
-LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
-LLM_MODEL=gemini-3.5-flash-lite
-LLM_API_KEY=<your key>
-LLM_REASONING_EFFORT=low
-```
+Then in Slack: `/why sales_daily_etl`, `/platform-status`, `/runbook file not found`, or
+**Rerun task** on the post.
 
-**Local Ollama:** `ollama pull <a model with tool support>`, then:
-```
-LLM_BASE_URL=http://host.docker.internal:11434/v1
-LLM_MODEL=<model>
-LLM_API_KEY=ollama
-LLM_TIMEOUT_SECONDS=300
-```
-Use a model that emits native tool calls (some older 7B models write the call as text,
-which the agent can't use), and raise Ollama's context window (`OLLAMA_CONTEXT_LENGTH=8192`).
-The 4096-token default silently drops the system prompt. CPU-only inference works but is
-slow.
+| Scenario | How it's injected | Ground truth |
+|---|---|---|
+| `bad_code` | a transform reads a renamed field → `KeyError` | `code_error` |
+| `missing_input` | the sales CSV is moved out of the landing directory | `missing_upstream_data` |
+| `upstream_down` | the upstream API returns 503 | `dependency_unavailable` |
+| `upstream_slow` | the upstream API waits 30 s → client timeout | `dependency_latency` |
+| `bad_connection` | the load points at a connection with stale credentials | `credentials_or_connection` |
+| `resource_exhaustion` | a task allocates memory until it is killed | `resource_limit` |
+| `scheduler_down` | the scheduler container is stopped | `scheduler_unhealthy` |
+| `disk_full` | the 8 MB reports volume is filled | `storage_full` |
 
-Free tiers are rate-limited. The client retries 429s with exponential backoff and honours
-the provider's delay (`Retry-After`, or Gemini's `retryDelay` in the error body). Tool output
-is trimmed (library traceback frames collapsed, log tail only), and `beacon-eval` pauses
-between runs.
+Run the evaluation yourself with
+`docker compose run --rm -T tools beacon-eval --runs 30 --seed 42`.
 
-## Slack setup (about 5 minutes)
+## Configuration
 
-1. https://api.slack.com/apps → **Create New App** → **From an app manifest** → pick your
-   workspace → paste [`slack/manifest.yml`](slack/manifest.yml) → **Create**.
-2. **Install App** → **Install to Workspace**. Copy the *Bot User OAuth Token* (`xoxb-…`) into
-   `SLACK_BOT_TOKEN`.
-3. **Basic Information** → **App-Level Tokens** → **Generate** with the `connections:write`
-   scope. Copy the `xapp-…` token into `SLACK_APP_TOKEN`.
-4. In Slack, open the channel for incidents. Click its name, and at the bottom of **About**
-   copy the **Channel ID** (`C…`) into `SLACK_INCIDENT_CHANNEL`. Then `/invite @beacon` in
-   that channel.
-5. Your profile → **⋮** → **Copy member ID** (`U…`). Put the IDs of people who may rerun
-   tasks, comma-separated, into `RERUN_ALLOWED_USERS`.
+### LLM (free options)
+
+Any OpenAI-compatible endpoint works, configured only through `.env`:
+
+| Provider | `.env` |
+|---|---|
+| **Groq** (default; free key at console.groq.com) | `LLM_BASE_URL=https://api.groq.com/openai/v1` · `LLM_MODEL=<a tool-calling model>` · `LLM_API_KEY=gsk_…` |
+| **Gemini** (free key at aistudio.google.com) | `LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/` · `LLM_MODEL=gemini-3.5-flash-lite` · `LLM_API_KEY=…` · `LLM_REASONING_EFFORT=low` |
+| **Ollama** (local) | `LLM_BASE_URL=http://host.docker.internal:11434/v1` · `LLM_MODEL=<model>` · `LLM_API_KEY=ollama` · `LLM_TIMEOUT_SECONDS=300` |
+
+The client retries rate-limited requests with exponential backoff and honours the
+provider's retry delay, so the free tiers are enough for the full 30-run evaluation.
+
+### Slack (about 5 minutes)
+
+1. At api.slack.com/apps: **Create New App** → **From an app manifest** → paste
+   [`slack/manifest.yml`](slack/manifest.yml).
+2. **Install App** → copy the bot token (`xoxb-…`) into `SLACK_BOT_TOKEN`.
+3. **Basic Information** → **App-Level Tokens** → generate one with `connections:write` →
+   copy it (`xapp-…`) into `SLACK_APP_TOKEN`.
+4. Copy the incident channel's ID (channel name → About → Channel ID) into
+   `SLACK_INCIDENT_CHANNEL`, then `/invite @beacon` in that channel.
+5. Copy the member IDs of people allowed to rerun tasks (Profile → ⋮ → Copy member ID)
+   into `RERUN_ALLOWED_USERS`.
 6. `docker compose up -d beacon-api beacon-slack`
 
-Commands: `/platform-status`, `/why <dag_id> [run_id]`, `/runbook <what you see>`. (Slack
-reserves `/status`, hence `/platform-status`.)
+Socket Mode means no public URL is needed. (Slack reserves `/status`, hence `/platform-status`.)
 
-## MCP setup
+### MCP
 
-The server exposes seven read-only tools (`get_platform_status`, `list_recent_failures`,
-`get_dag_run`, `get_task_logs`, `query_prometheus`, `search_runbooks`, `get_runbook`) and
-every runbook as a `runbook://<id>` resource.
+Seven read-only tools (`get_platform_status`, `list_recent_failures`, `get_dag_run`,
+`get_task_logs`, `query_prometheus`, `search_runbooks`, `get_runbook`), and every runbook as a
+`runbook://<id>` resource.
 
-**Claude Code**, using the HTTP server already running in compose:
-```bash
-claude mcp add --transport http beacon http://localhost:8200/mcp
-```
+- **HTTP**: point your MCP client at `http://localhost:8200/mcp` (streamable HTTP).
+- **stdio**: add this to your client's MCP server config:
 
-**Claude Desktop** (`claude_desktop_config.json`), using stdio through the container:
 ```json
 {
   "mcpServers": {
     "beacon": {
       "command": "docker",
-      "args": ["compose", "-f", "C:/path/to/beacon/docker-compose.yml", "run", "--rm", "-T",
-               "tools", "beacon-mcp"]
+      "args": ["compose", "-f", "/path/to/Beacon/docker-compose.yml",
+               "run", "--rm", "-T", "tools", "beacon-mcp"]
     }
   }
 }
 ```
-Or run it from a local install (`pip install -e .`) with
-`"command": "beacon-mcp"` and `AIRFLOW_URL=http://localhost:8080`,
-`PROMETHEUS_URL=http://localhost:9090` in `env`.
 
-**Example conversation** (the tool results are real output from the running stack, trimmed):
+<details>
+<summary>Example session (real tool output from the running stack)</summary>
 
-> **You:** Something in the data platform failed in the last half hour. What broke and why?
+> **User:** Something failed in the last half hour. What broke and why?
 >
-> **Claude** calls `list_recent_failures(since_minutes=30)` →
+> `list_recent_failures(since_minutes=30)` →
 > ```json
 > {"dag_id": "feature_build", "run_id": "manual__2026-10-22T19:09:59.329692+00:00",
->  "failed_tasks": [{"task_id": "compute_features", "state": "failed", "try_number": 2, "duration_s": 8.8}],
+>  "failed_tasks": [{"task_id": "compute_features", "state": "failed", "try_number": 2}],
 >  "upstream_failed": ["write_features"]}
 > ```
-> then `get_task_logs(dag_id="feature_build", run_id="manual__2026-10-22T19:09:59.329692+00:00", task_id="compute_features", tail_lines=8)` →
+> `get_task_logs(dag_id="feature_build", run_id=…, task_id="compute_features", tail_lines=8)` →
 > ```
-> 19:10:29 INFO - Interaction matrix buffer at 100 MB (rss=258 MB)
 > 19:10:29 INFO - Interaction matrix buffer at 120 MB (rss=278 MB)
 > 19:10:30 INFO - Interaction matrix buffer at 140 MB (rss=298 MB)
-> 19:10:30 INFO - Task exited with return code -9. For more information, see …#LocalTaskJob-killed
+> 19:10:30 INFO - Task exited with return code -9. … #LocalTaskJob-killed
 > ```
-> then `search_runbooks(query="Task exited with return code -9 after memory grew", k=2)` →
+> `search_runbooks(query="Task exited with return code -9 after memory grew", k=2)` →
 > ```json
 > {"results": [{"runbook_id": "rb-resource", "title": "Task killed for running out of memory", "score": 0.634}]}
 > ```
 >
-> **Claude:** `feature_build` failed in `compute_features`: the task's memory grew to about
-> 300 MB while building a dense interaction matrix, and it was killed (exit code -9, i.e.
-> SIGKILL), on both tries. `write_features` didn't run. Runbook `rb-resource` says to
-> process the data in chunks instead of materialising the whole matrix. As a stopgap, give
-> the task more memory, then rerun it.
+> **Assistant:** `feature_build` failed in `compute_features`. Its memory grew to about
+> 300 MB while it built a dense interaction matrix, and it was killed (exit -9, SIGKILL) on
+> both tries, so `write_features` never ran. Per `rb-resource`, process the data in chunks.
+> As a stopgap, give the task more memory and rerun it.
 
-## Demo script
+</details>
 
-```bash
-# 1. Break something (records ground truth and triggers the DAG right away)
-docker compose run --rm tools beacon-chaos inject missing_input
+### Tracing
 
-# 2. About 60-90 s later an incident post appears in the Slack channel:
-#    "🔴 sales_daily_etl: pipeline run failed" with summary, cause, evidence, runbook, buttons.
-
-# 3. In Slack
-/why sales_daily_etl          # "Looking into it…" then the diagnosis in a thread
-/platform-status              # scheduler + per-DAG success rate + open incidents
-/runbook file not found
-
-# 4. Fix it, then press "Rerun task" on the post (confirm; allowlisted users only)
-docker compose run --rm tools beacon-chaos reset
-
-# 5. Grafana: http://localhost:3001 → Beacon → Platform Health / Support & Incidents
-#    About 5 minutes after the last failure the alert resolves and the Slack post turns ✅.
-```
-
-All scenarios: `docker compose run --rm tools beacon-chaos list`
-
-| Scenario | Injected by | Ground truth | Runbook |
-|---|---|---|---|
-| `bad_code` | Variable makes `clean` read a renamed field → `KeyError` | `code_error` | `rb-code-error` |
-| `missing_input` | sales CSV moved out of the landing dir | `missing_upstream_data` | `rb-missing-input` |
-| `upstream_down` | upstream-mock returns 503 | `dependency_unavailable` | `rb-upstream-down` |
-| `upstream_slow` | upstream-mock waits 30 s → client timeout | `dependency_latency` | `rb-upstream-slow` |
-| `bad_connection` | load pointed at a connection with stale credentials | `credentials_or_connection` | `rb-connection` |
-| `resource_exhaustion` | `compute_features` allocates until killed (exit -9) | `resource_limit` | `rb-resource` |
-| `scheduler_down` | scheduler container stopped | `scheduler_unhealthy` | `rb-scheduler` |
-| `disk_full` | 8 MB reports volume filled | `storage_full` | `rb-disk-full` |
-
-## Running the evaluation
-
-```bash
-docker compose run --rm -T tools beacon-eval --runs 30 --seed 42
-```
-It writes `eval/results/<timestamp>.json` and `.md`, and pushes the accuracy gauges to
-beacon-api, so Grafana's *Support & Incidents* dashboard shows them.
-
-## Pulse tracing
-
-Set `PULSE_URL` (e.g. `http://host.docker.internal:8000`) and `PULSE_API_KEY` (a `ps_…`
-project key from Pulse → Settings). Every investigation becomes a trace: a root `agent` span
-with an `llm` span per model call and a `tool` span per tool call. With `PULSE_URL` empty,
-tracing is a no-op.
+Set `PULSE_URL` and `PULSE_API_KEY` to send every investigation to Pulse as a trace: a root
+agent span with one span per LLM call and per tool call. If `PULSE_URL` is empty, tracing
+is disabled.
 
 ## Tests
 
 ```bash
 pip install -e ".[dev]"
-python scripts/fetch_model.py   # optional: caches the embedding model locally
 pytest
 ```
-No API keys are needed. Airflow, Prometheus, Slack and the LLM are mocked (respx, a scripted
-fake LLM). Retrieval tests use the real MiniLM model.
 
-## Troubleshooting
+The suite runs with no API keys: Airflow, Prometheus, Slack and the LLM are mocked (respx and
+a scripted fake LLM). It covers:
+- the tools and the PromQL guard
+- webhook dedupe and resolution
+- the agent's retry and step cap
+- retrieval for every runbook
+- the Slack handlers, including the rerun allowlist
+- the chaos CLI and the MCP server
 
-* **Image build fails downloading the embedding model** (`CERTIFICATE_VERIFY_FAILED` for
-  huggingface.co, e.g. behind a TLS-intercepting proxy): run `python scripts/fetch_model.py`
-  on the host, then rebuild. The Dockerfile uses `./models` when present.
-* **pip timeouts during the build** on a slow connection: rerun `docker compose build`. The
-  layers that already finished are cached.
-* **`/why` says the model is unavailable**: check `LLM_*` in `.env` and
-  `docker compose logs beacon-api`. The free-tier limits differ per model.
-
-## Layout
+## Repository layout
 
 ```
-airflow/        Airflow image, 5 DAGs, fault-switch helpers
-upstream_mock/  fake external API with healthy/down/slow modes
-prometheus/     scrape config + alert rules      alertmanager/  webhook routing
-statsd/         statsd → Prometheus mapping      grafana/       provisioned datasource + 2 dashboards
-beacon/         core: api/, agent/, tools.py, retrieval/, store/, pulse.py, baseline.py
-beacon_slack/   Bolt app (Socket Mode)           beacon_mcp/    FastMCP server
-chaos/          fault injection CLI              eval/          evaluation harness + results
-runbooks/       12 runbooks (8 scenarios + 4 distractors)
-tests/          pytest suite                     slack/         app manifest
+airflow/         Airflow image, 5 DAGs, fault-switch helpers
+upstream_mock/   fake external API (healthy / down / slow)
+prometheus/      scrape config and alert rules
+alertmanager/    webhook routing
+statsd/          statsd → Prometheus metric mapping
+grafana/         provisioned datasource and two dashboards
+beacon/          core: api/, agent/, tools.py, retrieval/, store/, pulse.py, baseline.py
+beacon_slack/    Slack bot (Bolt, Socket Mode)
+beacon_mcp/      MCP server
+chaos/           fault-injection CLI
+eval/            evaluation harness and results
+runbooks/        12 runbooks (8 scenarios + 4 distractors)
+tests/           pytest suite
 ```

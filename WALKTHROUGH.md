@@ -1,8 +1,7 @@
 # Walkthrough
 
-This is a guided tour for explaining Beacon in an interview: what each part does and
-why it was built that way, then one real incident traced end to end with the actual
-values, then the questions you're likely to get and how to answer them.
+A guided tour of Beacon: what each part does and why it was built that way, then one real
+incident traced end to end with the actual values, then answers to common design questions.
 
 ---
 
@@ -80,8 +79,8 @@ It runs in Socket Mode, so no public URL is needed.
 **Why `/platform-status` and not `/status`:** Slack reserves `/status` for itself.
 
 ### MCP server
-**What it does:** exposes the same read-only tools and the runbooks to any MCP client (Claude
-Code, Claude Desktop) over stdio or HTTP.
+**What it does:** exposes the same read-only tools and the runbooks to any MCP client (desktop
+or IDE assistants) over stdio or HTTP.
 **Why:** the investigation tools are useful on their own, for an engineer poking around
 interactively. Because the MCP server and the agent share `beacon/tools.py`, there's exactly
 one implementation of each tool, with the same validation and masking.
@@ -193,7 +192,7 @@ button, and gets a thread reply.
 
 ---
 
-## Part 3 — Likely interview questions
+## Part 3 — Design questions
 
 **"How do you stop the agent from doing something dangerous?"**
 Several independent layers:
@@ -208,8 +207,8 @@ Several independent layers:
 5. **Bounded loop.** At most 8 rounds, per-tool timeouts, and a schema-validated output that
    falls back to "unknown" instead of guessing.
 
-It's the same principle as UnderCurrent's state machine: the model proposes, and only an
-authorised actor can make the transition.
+The principle is state-machine gating: the model proposes, and only an authorised actor can
+make the transition.
 
 **"How do you know it's accurate?"**
 Ground truth is recorded at injection time, and `beacon-eval` runs 30+ random scenarios
@@ -219,9 +218,9 @@ confusion matrix and every miss with the agent's evidence and tool calls. In pro
 you'd add the 👍/👎 feedback rate (already on the dashboard) and periodic human review of a
 sample of incidents.
 
-**"Why not just use the regex baseline?"**
-On clean synthetic failures the baseline does very well, and saying so is the honest
-result. The agent does the rest of the job:
+**"Why have a regex baseline at all?"**
+It gives a deterministic reference point and a regression floor for every prompt or model
+change. The agent covers the whole job, not just the classification:
 - it finds the failing run and task itself
 - it reads the right log
 - it writes a summary a pipeline owner understands
@@ -229,10 +228,8 @@ result. The agent does the rest of the job:
 - it handles messages and situations the regex list never anticipated, and says "unknown"
   when it can't tell
 
-The baseline is also a useful regression floor.
-
-**"Why a free-tier LLM? Isn't that a toy?"**
-It forces discipline that also matters at scale:
+**"Why design for a free-tier LLM?"**
+It enforces token and latency discipline that also matters at scale:
 - short prompts, and logs cleaned and cut to the relevant tail
 - library traceback frames collapsed
 - the run id handed to the agent so it doesn't waste steps finding it
@@ -248,7 +245,7 @@ Switching to Groq, Gemini, Ollama or a paid model is a `.env` change.
   unavailable.
 - Tracing to Pulse fails open.
 
-**"What would you change at Apple's scale?"**
+**"What would change at large scale?"**
 - **Throughput and isolation:** a queue (Kafka/SQS) between the webhook and a pool of agent
   workers, instead of in-process tasks with a semaphore. Also idempotency keys, and a
   durable store for the dedupe state.
@@ -274,12 +271,3 @@ reproducible; at scale you might use a small cross-encoder.
 **"Why Socket Mode?"** No public URL, no TLS, no inbound firewall rule; it works on a
 laptop. The trade-off is that the app can't go in the Slack Marketplace, which doesn't
 matter for an internal tool.
-
-**"What was the hardest bug?"** Some good candidates:
-- **Masked passwords:** Airflow masks every occurrence of a connection password in logs.
-  With the password `warehouse`, the word "warehouse" became `***` everywhere and destroyed
-  evidence.
-- **Disk-full that never failed:** the report job pruned old files *before* writing, freeing
-  exactly enough space for the write to succeed.
-- **Gemini `thought_signature`:** Gemini 3 rejects a follow-up turn unless the tool call's
-  `thought_signature` is echoed back.

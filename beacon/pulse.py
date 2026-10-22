@@ -1,4 +1,4 @@
-"""Trace agent runs into Pulse (the author's agent observability platform).
+"""Trace agent runs into Pulse, an agent observability platform.
 
 Matches Pulse's ingest API:
   POST  /api/v1/ingest/trace               -> {"trace_id"}

@@ -30,7 +30,7 @@ def test_baseline_runbook_mapping():
 
 
 @pytest.mark.parametrize("secret", [
-    "xox" "b-123456789012-123456789012-abcdefABCDEF1234",
+    "xox" "b-123456789012-123456789012-abcdefABCDEF1234",  # split so scanners skip the fake
     "xa" "pp-1-A01234567-1234567890-abcdef0123456789",
     "gsk_abcdefghijklmnopqrstuvwxyz012345",
     "sk-proj-abcdefghijklmnopqrstuvwx",

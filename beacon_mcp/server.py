@@ -1,6 +1,6 @@
 """beacon-mcp: the read-only investigation tools from beacon/tools.py as an MCP server.
 
-Transports: stdio (local clients such as Claude Code / Claude Desktop) and streamable
+Transports: stdio (desktop or IDE MCP clients) and streamable
 HTTP (inside docker compose, served at http://<host>:8200/mcp).
 """
 # No `from __future__ import annotations`: FastMCP 1.9 inspects real annotation objects.

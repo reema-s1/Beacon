@@ -69,7 +69,7 @@ class TriageCategory(str, Enum):
     other = "other"
 
 
-# Ground truth used by the chaos CLI and the evaluation (design section 5).
+# Ground truth used by the chaos CLI and the evaluation: the runbook for each root cause.
 CAUSE_TO_RUNBOOK: dict[RootCause, str] = {
     RootCause.code_error: "rb-code-error",
     RootCause.missing_upstream_data: "rb-missing-input",

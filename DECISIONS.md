@@ -20,8 +20,8 @@ A rerun happens only when a person presses **Rerun task**, confirms in a modal, 
 and again in `POST /actions/rerun` (the API is the real gate, so a crafted request can't
 skip it).
 
-This is the same idea as the state-machine gating in UnderCurrent: a model can propose a
-transition, but only an authorised actor can make it. LLMs are confidently wrong some of
+The principle is state-machine gating: a model can propose a transition, but only an
+authorised actor can make it. LLMs are confidently wrong some of
 the time; a wrong explanation costs a minute of someone's attention, a wrong action can
 corrupt data or hide the real failure. Rerunning is also usually the wrong first move —
 `bad_code`, `missing_input` or `disk_full` fail again until someone fixes the cause — so the
@@ -33,10 +33,9 @@ environment and are masked before anything reaches the LLM or Slack.
 
 ## A rule-based baseline
 
-Without a baseline, "the agent gets 85% right" means little. A dozen ordered regexes over the
-same log text answer the question "what does the LLM add over grep?". On clean, synthetic
-failures the honest answer is "not much on root cause", and the evaluation shows that. What
-the agent adds is the rest of the job: it finds the failing run and task itself, reads the
+An accuracy number means little without a reference point. A dozen ordered regexes over the
+same log text provide one, scored on exactly the same evidence as the agent. Beyond
+classifying the cause, the agent does the rest of the job: it finds the failing run and task itself, reads the
 right log, writes a summary a pipeline owner can act on, picks the runbook, and copes with
 inputs a regex list doesn't anticipate (and says `unknown` instead of guessing). The baseline
 also gives a cheap fallback and a regression check: if the agent ever scores below it, the

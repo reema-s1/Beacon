@@ -1,4 +1,4 @@
-"""Fault scenarios with ground-truth labels (design section 5)."""
+"""Fault scenarios, each with the ground-truth root cause and runbook the evaluation expects."""
 from __future__ import annotations
 
 from dataclasses import dataclass
