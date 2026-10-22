@@ -184,7 +184,8 @@
                 "value": 1
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -214,7 +215,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (dag_id) (increase(airflow_dagrun_duration_count{status=\"failed\"}[5m]))",
+          "expr": "round(sum by (dag_id) (increase(airflow_dagrun_duration_count{status=\"failed\"}[$__interval])))",
           "legendFormat": "{{dag_id}}",
           "refId": "A",
           "range": true,
@@ -224,6 +225,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
+          "decimals": 0,
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 60,
@@ -234,7 +236,8 @@
         },
         "overrides": []
       },
-      "options": {}
+      "options": {},
+      "interval": "5m"
     },
     {
       "id": 5,
@@ -354,7 +357,7 @@
       "id": 7,
       "title": "Failed tasks in the last hour",
       "description": "Which steps failed, and how often.",
-      "type": "table",
+      "type": "bargauge",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -372,38 +375,29 @@
             "uid": "prometheus"
           },
           "expr": "sort_desc(round(sum by (dag_id, task_id) (increase(airflow_ti_finish{state=\"failed\"}[1h]))) > 0)",
-          "legendFormat": "",
+          "legendFormat": "{{dag_id}} \u203a {{task_id}}",
           "refId": "A",
           "range": false,
-          "instant": true,
-          "format": "table"
+          "instant": true
         }
       ],
       "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
-      "options": {},
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "alertstate": true
-            }
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
           }
         },
-        {
-          "id": "renameByName",
-          "options": {
-            "renameByName": {
-              "Value": "failures"
-            }
-          }
-        }
-      ]
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true
+      }
     }
   ],
   "templating": {
