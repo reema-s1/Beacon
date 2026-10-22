@@ -7,6 +7,7 @@ HTTP (inside docker compose, served at http://<host>:8200/mcp).
 import argparse
 import json
 import logging
+import threading
 
 from mcp.server.fastmcp import FastMCP
 
@@ -88,6 +89,9 @@ def main() -> None:
     # stdout carries the stdio protocol, so logs go to stderr.
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     server = build_server(args.host, args.port)
+    # Load the embedding model now, not inside the first search_runbooks call's timeout.
+    from beacon.retrieval import get_retriever
+    threading.Thread(target=get_retriever, daemon=True).start()
     server.run(transport="stdio" if args.transport == "stdio" else "streamable-http")
 
 
