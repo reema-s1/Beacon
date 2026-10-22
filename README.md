@@ -9,6 +9,8 @@ diagnosis to Slack, with the evidence and the runbook to fix it.
 **Results:** 30 fault-injection runs end to end; the root cause and runbook were right in all 30.
 Median time from fault to Slack post: 61 s. ([details](#evaluation))
 
+![A Beacon incident post in Slack: summary, impact, likely cause, evidence and runbook steps](docs/img/slack-incident.png)
+
 ---
 
 ## Why
