@@ -78,7 +78,12 @@ class IncidentService:
             tis = await self.airflow.task_instances(dag_id, run["dag_run_id"])
             failed = [t["task_id"] for t in tis if t.get("state") == "failed"]
             slow = sorted(tis, key=lambda t: t.get("duration") or 0, reverse=True)
-            task_id = task_label or (failed[0] if failed else (slow[0]["task_id"] if alert_name in _SLOW_ALERTS and slow else None))
+            if task_label and (task_label in failed or not failed):
+                task_id = task_label
+            elif failed:
+                task_id = failed[0]  # the run's real failure wins over a stale alert label
+            else:
+                task_id = slow[0]["task_id"] if alert_name in _SLOW_ALERTS and slow else None
             return {"run_id": run["dag_run_id"], "failed_tasks": failed, "task_id": task_id,
                     "event_time": _parse_ts(run.get("end_date")) or _parse_ts(run.get("start_date"))}
         except (UpstreamError, KeyError) as exc:

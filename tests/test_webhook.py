@@ -187,3 +187,13 @@ def test_triage_seconds_measured_from_alert_receipt():
         db.commit()
         inc = db.scalars(select(Incident)).one()
     assert (inc.triaged_at - inc.created_at).total_seconds() == 12
+
+
+@respx.mock
+async def test_incident_uses_the_runs_failed_task_over_a_stale_alert_label():
+    mock_airflow()  # the run's failed task is "extract"
+    svc, _, _ = make_service()
+    out = await svc.handle_alertmanager(payload(alert("TaskFailureSpike", fp="fp-x", task_id="load")))
+    await svc.wait_idle()
+    with session() as db:
+        assert db.get(Incident, out["created"][0]).task_id == "extract"
