@@ -1,0 +1,1747 @@
+{
+  "meta": {
+    "started_at": "2026-10-22T19:05:17.794338+00:00",
+    "seed": 42,
+    "runs": 30,
+    "model": "gemini-3.5-flash-lite",
+    "llm_base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+    "finished_at": "2026-10-22T19:54:17.137843+00:00"
+  },
+  "summary": {
+    "runs": 30,
+    "timeouts": 0,
+    "agent": {
+      "root_cause_accuracy": 1.0,
+      "runbook_accuracy": 1.0
+    },
+    "baseline": {
+      "root_cause_accuracy": 1.0,
+      "runbook_accuracy": 1.0
+    },
+    "latency_seconds": {
+      "end_to_end_p50": 61.4,
+      "end_to_end_p95": 111.7,
+      "triage_p50": 14.4,
+      "triage_p95": 51.0
+    },
+    "per_scenario": {
+      "bad_code": {
+        "runs": 5,
+        "agent_root_cause": 1.0,
+        "agent_runbook": 1.0,
+        "baseline_root_cause": 1.0
+      },
+      "bad_connection": {
+        "runs": 6,
+        "agent_root_cause": 1.0,
+        "agent_runbook": 1.0,
+        "baseline_root_cause": 1.0
+      },
+      "disk_full": {
+        "runs": 3,
+        "agent_root_cause": 1.0,
+        "agent_runbook": 1.0,
+        "baseline_root_cause": 1.0
+      },
+      "missing_input": {
+        "runs": 7,
+        "agent_root_cause": 1.0,
+        "agent_runbook": 1.0,
+        "baseline_root_cause": 1.0
+      },
+      "resource_exhaustion": {
+        "runs": 3,
+        "agent_root_cause": 1.0,
+        "agent_runbook": 1.0,
+        "baseline_root_cause": 1.0
+      },
+      "scheduler_down": {
+        "runs": 2,
+        "agent_root_cause": 1.0,
+        "agent_runbook": 1.0,
+        "baseline_root_cause": 1.0
+      },
+      "upstream_down": {
+        "runs": 3,
+        "agent_root_cause": 1.0,
+        "agent_runbook": 1.0,
+        "baseline_root_cause": 1.0
+      },
+      "upstream_slow": {
+        "runs": 1,
+        "agent_root_cause": 1.0,
+        "agent_runbook": 1.0,
+        "baseline_root_cause": 1.0
+      }
+    },
+    "confusion": {
+      "credentials_or_connection": {
+        "credentials_or_connection": 6
+      },
+      "code_error": {
+        "code_error": 5
+      },
+      "resource_limit": {
+        "resource_limit": 3
+      },
+      "missing_upstream_data": {
+        "missing_upstream_data": 7
+      },
+      "storage_full": {
+        "storage_full": 3
+      },
+      "dependency_unavailable": {
+        "dependency_unavailable": 3
+      },
+      "dependency_latency": {
+        "dependency_latency": 1
+      },
+      "scheduler_unhealthy": {
+        "scheduler_unhealthy": 2
+      }
+    }
+  },
+  "records": [
+    {
+      "run": 1,
+      "scenario": "bad_connection",
+      "injection_id": 14,
+      "ground_truth": "credentials_or_connection",
+      "expected_runbook": "rb-connection",
+      "injected_at": "2026-10-22T19:05:22.222139+00:00",
+      "incident_id": 22,
+      "timed_out": false,
+      "agent_root_cause": "credentials_or_connection",
+      "agent_runbook": "rb-connection",
+      "agent_confidence": 1.0,
+      "agent_steps": 4,
+      "baseline_root_cause": "credentials_or_connection",
+      "baseline_runbook": "rb-connection",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 68.9,
+      "triage_seconds": 22.4,
+      "summary": "The daily sales data pipeline failed while trying to load processed data into the warehouse because the database connection rejected the password for the warehouse user.",
+      "evidence": [
+        "psycopg2.OperationalError: connection to server at \"postgres\" (172.22.0.2), port 5432 failed: FATAL:  password authentication failed for user \"warehouse\""
+      ],
+      "suggested_action": "Check and update the Airflow connection 'warehouse_db_v2' with the correct password for user 'warehouse'.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:05:23.572637+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "task_id": "load",
+            "run_id": "manual__2026-10-22T19:05:23.572637+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "password authentication failed"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 2,
+      "scenario": "bad_code",
+      "injection_id": 15,
+      "ground_truth": "code_error",
+      "expected_runbook": "rb-code-error",
+      "injected_at": "2026-10-22T19:07:17.880294+00:00",
+      "incident_id": 23,
+      "timed_out": false,
+      "agent_root_cause": "code_error",
+      "agent_runbook": "rb-code-error",
+      "agent_confidence": 0.95,
+      "agent_steps": 3,
+      "baseline_root_cause": "code_error",
+      "baseline_runbook": "rb-code-error",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 123.0,
+      "triage_seconds": 12.0,
+      "summary": "The sales daily ETL pipeline failed because the code encountered a KeyError when trying to access the 'unit_price_usd' field in the input data.",
+      "evidence": [
+        "KeyError: 'unit_price_usd'",
+        "File \"/opt/airflow/dags/sales_daily_etl.py\", line 48, in clean",
+        "price = float(row[price_field])"
+      ],
+      "suggested_action": "Check the source data schema or update the pipeline code in sales_daily_etl.py to handle or fix the expected column name.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "clean",
+            "dag_id": "sales_daily_etl",
+            "run_id": "manual__2026-10-22T19:07:18.956566+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "KeyError"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 3,
+      "scenario": "resource_exhaustion",
+      "injection_id": 16,
+      "ground_truth": "resource_limit",
+      "expected_runbook": "rb-resource",
+      "injected_at": "2026-10-22T19:09:58.560026+00:00",
+      "incident_id": 24,
+      "timed_out": false,
+      "agent_root_cause": "resource_limit",
+      "agent_runbook": "rb-resource",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "resource_limit",
+      "baseline_runbook": "rb-resource",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 67.9,
+      "triage_seconds": 12.9,
+      "summary": "The feature_build pipeline failed because the compute_features task ran out of available memory and was terminated by the system.",
+      "evidence": [
+        "Task exited with return code -9. For more information, see https://airflow.apache.org/docs/apache-airflow/stable/troubleshooting.html#LocalTaskJob-killed"
+      ],
+      "suggested_action": "Increase the memory limit for the worker or optimize the memory footprint of the compute_features task.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "feature_build",
+            "task_id": "compute_features",
+            "run_id": "manual__2026-10-22T19:09:59.329692+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "return code -9 OOM killed memory limit"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 4,
+      "scenario": "missing_input",
+      "injection_id": 17,
+      "ground_truth": "missing_upstream_data",
+      "expected_runbook": "rb-missing-input",
+      "injected_at": "2026-10-22T19:11:45.047192+00:00",
+      "incident_id": 25,
+      "timed_out": false,
+      "agent_root_cause": "missing_upstream_data",
+      "agent_runbook": "rb-missing-input",
+      "agent_confidence": 1.0,
+      "agent_steps": 5,
+      "baseline_root_cause": "missing_upstream_data",
+      "baseline_runbook": "rb-missing-input",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 36.9,
+      "triage_seconds": 13.4,
+      "summary": "The sales daily ETL pipeline failed because the required input file 'sales.csv' was missing from the incoming data directory. As a result, the extraction step could not read the data and stopped the entire pipeline execution.",
+      "evidence": [
+        "ERROR - Input file /opt/airflow/data/incoming/sales.csv does not exist. Files present in /opt/airflow/data/incoming: []",
+        "FileNotFoundError: Expected input file not found: /opt/airflow/data/incoming/sales.csv"
+      ],
+      "suggested_action": "Verify with the upstream data producer that the sales.csv file was delivered to the correct location, place the file in /opt/airflow/data/incoming/, and clear the failed task to retry the pipeline.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:11:47.406661+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "run_id": "manual__2026-10-22T19:11:47.406661+00:00",
+            "task_id": "extract"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "input file not found"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-missing-input"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 5,
+      "scenario": "missing_input",
+      "injection_id": 18,
+      "ground_truth": "missing_upstream_data",
+      "expected_runbook": "rb-missing-input",
+      "injected_at": "2026-10-22T19:13:06.451937+00:00",
+      "incident_id": 26,
+      "timed_out": false,
+      "agent_root_cause": "missing_upstream_data",
+      "agent_runbook": "rb-missing-input",
+      "agent_confidence": 1.0,
+      "agent_steps": 5,
+      "baseline_root_cause": "missing_upstream_data",
+      "baseline_runbook": "rb-missing-input",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 49.8,
+      "triage_seconds": 17.6,
+      "summary": "The sales_daily_etl pipeline failed because the expected input file (/opt/airflow/data/incoming/sales.csv) was missing from the incoming directory. The task raised a FileNotFoundError and failed.",
+      "evidence": [
+        "Input file /opt/airflow/data/incoming/sales.csv does not exist. Files present in /opt/airflow/data/incoming: []",
+        "FileNotFoundError: Expected input file not found: /opt/airflow/data/incoming/sales.csv"
+      ],
+      "suggested_action": "Check with the upstream data producer to ensure the sales.csv file is delivered to /opt/airflow/data/incoming/, then retry the DAG run.",
+      "tool_calls": [
+        {
+          "tool": "list_recent_failures",
+          "arguments": {
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:13:07.058004+00:00",
+            "dag_id": "sales_daily_etl",
+            "task_id": "extract"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "FileNotFoundError Expected input file not found"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-missing-input"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 6,
+      "scenario": "disk_full",
+      "injection_id": 19,
+      "ground_truth": "storage_full",
+      "expected_runbook": "rb-disk-full",
+      "injected_at": "2026-10-22T19:14:29.620892+00:00",
+      "incident_id": 27,
+      "timed_out": false,
+      "agent_root_cause": "storage_full",
+      "agent_runbook": "rb-disk-full",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "storage_full",
+      "baseline_runbook": "rb-disk-full",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 46.7,
+      "triage_seconds": 7.8,
+      "summary": "The report export pipeline failed because the server's storage volume ran out of disk space while attempting to write the CSV report.",
+      "evidence": [
+        "19:14:45 INFO - Writing /opt/airflow/reports/sales_report_20261022T191430.csv (829059 bytes); volume /opt/airflow/reports free=0 bytes of 8388608",
+        "OSError: [Errno 28] No space left on device"
+      ],
+      "suggested_action": "Free up disk space on the storage volume by clearing old reports or log files, then retry the failed DAG run.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "write_report",
+            "run_id": "manual__2026-10-22T19:14:30.365368+00:00",
+            "dag_id": "report_export"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "No space left on device"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 7,
+      "scenario": "bad_connection",
+      "injection_id": 20,
+      "ground_truth": "credentials_or_connection",
+      "expected_runbook": "rb-connection",
+      "injected_at": "2026-10-22T19:15:50.151319+00:00",
+      "incident_id": 28,
+      "timed_out": false,
+      "agent_root_cause": "credentials_or_connection",
+      "agent_runbook": "rb-connection",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "credentials_or_connection",
+      "baseline_runbook": "rb-connection",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 65.6,
+      "triage_seconds": 17.3,
+      "summary": "The sales daily ETL pipeline failed because the task to load data into the warehouse encountered an authentication error. The password authentication failed for the database user, preventing the task from connecting to the PostgreSQL server.",
+      "evidence": [
+        "psycopg2.OperationalError: connection to server at \"postgres\" (172.22.0.2), port 5432 failed: FATAL:  password authentication failed for user \"warehouse\""
+      ],
+      "suggested_action": "Check the Airflow connection settings for 'warehouse_db_v2' to ensure the correct password for user 'warehouse' is configured, and verify that the database credentials match.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:15:51.092420+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "task_id": "load",
+            "run_id": "manual__2026-10-22T19:15:51.092420+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "password authentication failed"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 8,
+      "scenario": "bad_connection",
+      "injection_id": 21,
+      "ground_truth": "credentials_or_connection",
+      "expected_runbook": "rb-connection",
+      "injected_at": "2026-10-22T19:17:34.191056+00:00",
+      "incident_id": 29,
+      "timed_out": false,
+      "agent_root_cause": "credentials_or_connection",
+      "agent_runbook": "rb-connection",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "credentials_or_connection",
+      "baseline_runbook": "rb-connection",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 40.0,
+      "triage_seconds": 5.7,
+      "summary": "The sales daily ETL pipeline failed when trying to load data into the warehouse because the database password authentication failed. The connection 'warehouse_db_v2' rejected the credentials provided for user 'warehouse'.",
+      "evidence": [
+        "psycopg2.OperationalError: connection to server at \"postgres\" (172.22.0.2), port 5432 failed: FATAL:  password authentication failed for user \"warehouse\""
+      ],
+      "suggested_action": "Verify and update the credentials for the 'warehouse_db_v2' connection in the Airflow UI or environment variables.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "run_id": "manual__2026-10-22T19:17:34.908556+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "load",
+            "run_id": "manual__2026-10-22T19:17:34.908556+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "password authentication failed"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 9,
+      "scenario": "upstream_down",
+      "injection_id": 22,
+      "ground_truth": "dependency_unavailable",
+      "expected_runbook": "rb-upstream-down",
+      "injected_at": "2026-10-22T19:18:46.824593+00:00",
+      "incident_id": 30,
+      "timed_out": false,
+      "agent_root_cause": "dependency_unavailable",
+      "agent_runbook": "rb-upstream-down",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "dependency_unavailable",
+      "baseline_runbook": "rb-upstream-down",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 51.5,
+      "triage_seconds": 14.9,
+      "summary": "The data pipeline failed because the external events API is currently down and returning 503 Service Unavailable errors during maintenance.",
+      "evidence": [
+        "Upstream responded 503 in 0.03s",
+        "requests.exceptions.HTTPError: 503 Server Error: Service Unavailable for url: http://upstream-mock:8000/events?limit=200"
+      ],
+      "suggested_action": "Wait for the upstream events service to complete its maintenance and finish coming back online, then retry the DAG run.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:18:47.303317+00:00",
+            "task_id": "fetch_events",
+            "dag_id": "user_events_ingest"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "503 Service Unavailable upstream events service"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 10,
+      "scenario": "bad_code",
+      "injection_id": 23,
+      "ground_truth": "code_error",
+      "expected_runbook": "rb-code-error",
+      "injected_at": "2026-10-22T19:20:09.791717+00:00",
+      "incident_id": 31,
+      "timed_out": false,
+      "agent_root_cause": "code_error",
+      "agent_runbook": "rb-code-error",
+      "agent_confidence": 0.95,
+      "agent_steps": 4,
+      "baseline_root_cause": "code_error",
+      "baseline_runbook": "rb-code-error",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 67.1,
+      "triage_seconds": 8.4,
+      "summary": "The sales daily ETL pipeline failed because the cleaning task encountered a Python KeyError when looking for the 'unit_price_usd' field in the input data. As a result, subsequent steps like aggregation and loading were skipped.",
+      "evidence": [
+        "File \"/opt/airflow/dags/sales_daily_etl.py\", line 48, in clean",
+        "    price = float(row[price_field])",
+        "KeyError: 'unit_price_usd'"
+      ],
+      "suggested_action": "Check the pipeline code in sales_daily_etl.py or the input schema to ensure 'unit_price_usd' is present or handled properly if renamed.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:20:11.486760+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "task_id": "clean",
+            "run_id": "manual__2026-10-22T19:20:11.486760+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "KeyError"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 11,
+      "scenario": "bad_code",
+      "injection_id": 24,
+      "ground_truth": "code_error",
+      "expected_runbook": "rb-code-error",
+      "injected_at": "2026-10-22T19:21:48.398733+00:00",
+      "incident_id": 32,
+      "timed_out": false,
+      "agent_root_cause": "code_error",
+      "agent_runbook": "rb-code-error",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "code_error",
+      "baseline_runbook": "rb-code-error",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 44.4,
+      "triage_seconds": 9.3,
+      "summary": "The sales daily ETL pipeline failed because the code tried to access a column named 'unit_price_usd' that was missing from the input data.",
+      "evidence": [
+        "  File \"/opt/airflow/dags/sales_daily_etl.py\", line 48, in clean",
+        "    price = float(row[price_field])",
+        "KeyError: 'unit_price_usd'"
+      ],
+      "suggested_action": "Check the pipeline code in sales_daily_etl.py around line 48 and the incoming data schema to ensure the expected column 'unit_price_usd' exists.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:21:49.159800+00:00",
+            "dag_id": "sales_daily_etl",
+            "task_id": "clean"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "KeyError unit_price_usd"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 12,
+      "scenario": "bad_connection",
+      "injection_id": 25,
+      "ground_truth": "credentials_or_connection",
+      "expected_runbook": "rb-connection",
+      "injected_at": "2026-10-22T19:23:01.317349+00:00",
+      "incident_id": 33,
+      "timed_out": false,
+      "agent_root_cause": "credentials_or_connection",
+      "agent_runbook": "rb-connection",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "credentials_or_connection",
+      "baseline_runbook": "rb-connection",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 60.7,
+      "triage_seconds": 8.4,
+      "summary": "The sales daily ETL pipeline failed because the database connection rejected the password for the warehouse user.",
+      "evidence": [
+        "psycopg2.OperationalError: connection to server at \"postgres\" (172.22.0.2), port 5432 failed: FATAL:  password authentication failed for user \"warehouse\""
+      ],
+      "suggested_action": "Check the Airflow connection 'warehouse_db_v2' and update the password for the warehouse user.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:23:06.414325+00:00",
+            "task_id": "load",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "password authentication failed"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 13,
+      "scenario": "missing_input",
+      "injection_id": 26,
+      "ground_truth": "missing_upstream_data",
+      "expected_runbook": "rb-missing-input",
+      "injected_at": "2026-10-22T19:24:50.085655+00:00",
+      "incident_id": 34,
+      "timed_out": false,
+      "agent_root_cause": "missing_upstream_data",
+      "agent_runbook": "rb-missing-input",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "missing_upstream_data",
+      "baseline_runbook": "rb-missing-input",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 39.6,
+      "triage_seconds": 6.3,
+      "summary": "The sales daily ETL pipeline failed because the required input file 'sales.csv' was not found in the incoming data directory.",
+      "evidence": [
+        "Input file /opt/airflow/data/incoming/sales.csv does not exist. Files present in /opt/airflow/data/incoming: []",
+        "FileNotFoundError: Expected input file not found: /opt/airflow/data/incoming/sales.csv"
+      ],
+      "suggested_action": "Check with the upstream data provider to ensure the sales.csv file has been uploaded to the incoming data directory, then retry the DAG run.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "extract",
+            "run_id": "manual__2026-10-22T19:24:50.510248+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "Expected input file not found"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 14,
+      "scenario": "missing_input",
+      "injection_id": 27,
+      "ground_truth": "missing_upstream_data",
+      "expected_runbook": "rb-missing-input",
+      "injected_at": "2026-10-22T19:26:13.640393+00:00",
+      "incident_id": 35,
+      "timed_out": false,
+      "agent_root_cause": "missing_upstream_data",
+      "agent_runbook": "rb-missing-input",
+      "agent_confidence": 1.0,
+      "agent_steps": 5,
+      "baseline_root_cause": "missing_upstream_data",
+      "baseline_runbook": "rb-missing-input",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 62.0,
+      "triage_seconds": 22.3,
+      "summary": "The sales_daily_etl pipeline failed because the expected input file (/opt/airflow/data/incoming/sales.csv) was missing from the incoming directory. The upstream data producer has not delivered the file yet, or it was placed in a different location.",
+      "evidence": [
+        "Input file /opt/airflow/data/incoming/sales.csv does not exist. Files present in /opt/airflow/data/incoming: []",
+        "FileNotFoundError: Expected input file not found: /opt/airflow/data/incoming/sales.csv"
+      ],
+      "suggested_action": "Verify with the upstream data producer whether the file delivery is delayed or misnamed. Once the file is placed in /opt/airflow/data/incoming/sales.csv, clear the failed tasks to resume the pipeline.",
+      "tool_calls": [
+        {
+          "tool": "list_recent_failures",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "since_minutes": 60
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "extract",
+            "run_id": "manual__2026-10-22T19:26:17.081929+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "FileNotFoundError sales.csv"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-missing-input"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 15,
+      "scenario": "bad_code",
+      "injection_id": 28,
+      "ground_truth": "code_error",
+      "expected_runbook": "rb-code-error",
+      "injected_at": "2026-10-22T19:27:44.119033+00:00",
+      "incident_id": 36,
+      "timed_out": false,
+      "agent_root_cause": "code_error",
+      "agent_runbook": "rb-code-error",
+      "agent_confidence": 1.0,
+      "agent_steps": 6,
+      "baseline_root_cause": "code_error",
+      "baseline_runbook": "rb-code-error",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 98.0,
+      "triage_seconds": 58.7,
+      "summary": "The sales_daily_etl pipeline failed because the 'clean' task encountered a KeyError when trying to access the 'unit_price_usd' field in the input data.",
+      "evidence": [
+        "File \"/opt/airflow/dags/sales_daily_etl.py\", line 48, in clean",
+        "    price = float(row[price_field])",
+        "KeyError: 'unit_price_usd'"
+      ],
+      "suggested_action": "Check the pipeline code and input data source to ensure the field name 'unit_price_usd' matches the columns provided, deploy a fix, and rerun the task.",
+      "tool_calls": [
+        {
+          "tool": "list_recent_failures",
+          "arguments": {
+            "since_minutes": 60,
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "run_id": "manual__2026-10-22T19:27:45.307618+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "clean",
+            "run_id": "manual__2026-10-22T19:27:45.307618+00:00",
+            "tail_lines": 40,
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "KeyError"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-code-error"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 16,
+      "scenario": "missing_input",
+      "injection_id": 29,
+      "ground_truth": "missing_upstream_data",
+      "expected_runbook": "rb-missing-input",
+      "injected_at": "2026-10-22T19:29:52.327560+00:00",
+      "incident_id": 37,
+      "timed_out": false,
+      "agent_root_cause": "missing_upstream_data",
+      "agent_runbook": "rb-missing-input",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "missing_upstream_data",
+      "baseline_runbook": "rb-missing-input",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 22.3,
+      "triage_seconds": 6.3,
+      "summary": "The daily sales ETL pipeline failed because the expected input file '/opt/airflow/data/incoming/sales.csv' was not found in the incoming directory. As a result, the extraction task failed and subsequent downstream tasks were skipped.",
+      "evidence": [
+        "FileNotFoundError: Expected input file not found: /opt/airflow/data/incoming/sales.csv",
+        "Input file /opt/airflow/data/incoming/sales.csv does not exist. Files present in /opt/airflow/data/incoming: []"
+      ],
+      "suggested_action": "Check with the upstream data producer to ensure that sales.csv is successfully delivered to the /opt/airflow/data/incoming directory, then re-trigger the DAG run.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:29:52.722310+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "extract",
+            "run_id": "manual__2026-10-22T19:29:52.722310+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "Expected input file not found"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 17,
+      "scenario": "upstream_down",
+      "injection_id": 30,
+      "ground_truth": "dependency_unavailable",
+      "expected_runbook": "rb-upstream-down",
+      "injected_at": "2026-10-22T19:30:54.595628+00:00",
+      "incident_id": 38,
+      "timed_out": false,
+      "agent_root_cause": "dependency_unavailable",
+      "agent_runbook": "rb-upstream-down",
+      "agent_confidence": 1.0,
+      "agent_steps": 4,
+      "baseline_root_cause": "dependency_unavailable",
+      "baseline_runbook": "rb-upstream-down",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 34.9,
+      "triage_seconds": 6.2,
+      "summary": "The user_events_ingest pipeline failed because the upstream events service returned a 503 Service Unavailable error.",
+      "evidence": [
+        "19:31:07 INFO - Upstream responded 503 in 0.01s",
+        "requests.exceptions.HTTPError: 503 Server Error: Service Unavailable for url: http://upstream-mock:8000/events?limit=200"
+      ],
+      "suggested_action": "Check the status of the upstream events service (http://upstream-mock:8000/events) or contact its owning team. Once the service is healthy, retry the failed task.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:30:54.860372+00:00",
+            "dag_id": "user_events_ingest"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "user_events_ingest",
+            "task_id": "fetch_events",
+            "run_id": "manual__2026-10-22T19:30:54.860372+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "503 Service Unavailable"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-upstream-down"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 18,
+      "scenario": "missing_input",
+      "injection_id": 31,
+      "ground_truth": "missing_upstream_data",
+      "expected_runbook": "rb-missing-input",
+      "injected_at": "2026-10-22T19:31:56.344934+00:00",
+      "incident_id": 39,
+      "timed_out": false,
+      "agent_root_cause": "missing_upstream_data",
+      "agent_runbook": "rb-missing-input",
+      "agent_confidence": 1.0,
+      "agent_steps": 5,
+      "baseline_root_cause": "missing_upstream_data",
+      "baseline_runbook": "rb-missing-input",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 78.4,
+      "triage_seconds": 21.3,
+      "summary": "The sales_daily_etl pipeline failed because the expected input file (/opt/airflow/data/incoming/sales.csv) was missing from the landing directory.",
+      "evidence": [
+        "FileNotFoundError: Expected input file not found: /opt/airflow/data/incoming/sales.csv",
+        "Input file /opt/airflow/data/incoming/sales.csv does not exist. Files present in /opt/airflow/data/incoming: []"
+      ],
+      "suggested_action": "Verify with the upstream data producer why sales.csv was not delivered to /opt/airflow/data/incoming/ or re-deliver the file, then clear the failed task.",
+      "tool_calls": [
+        {
+          "tool": "list_recent_failures",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "since_minutes": 60
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "task_id": "extract",
+            "tail_lines": 40,
+            "run_id": "manual__2026-10-22T19:31:56.747202+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "missing input file sales.csv"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-missing-input"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 19,
+      "scenario": "upstream_slow",
+      "injection_id": 32,
+      "ground_truth": "dependency_latency",
+      "expected_runbook": "rb-upstream-slow",
+      "injected_at": "2026-10-22T19:33:49.486175+00:00",
+      "incident_id": 40,
+      "timed_out": false,
+      "agent_root_cause": "dependency_latency",
+      "agent_runbook": "rb-upstream-slow",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "dependency_latency",
+      "baseline_runbook": "rb-upstream-slow",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 39.8,
+      "triage_seconds": 6.0,
+      "summary": "The pipeline task fetch_events failed because the external upstream API did not respond within the configured 10-second timeout. As a result, the user_events_ingest DAG run failed.",
+      "evidence": [
+        "19:34:22 ERROR - Upstream events API did not respond within 10s (waited 10.0s)",
+        "requests.exceptions.ReadTimeout: HTTPConnectionPool(host='upstream-mock', port=8000): Read timed out. (read timeout=10)"
+      ],
+      "suggested_action": "Check the health and performance of the upstream service (upstream-mock:8000). If the latency is transient, retry the DAG run once the upstream service responds normally.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:33:49.798877+00:00",
+            "dag_id": "user_events_ingest"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "user_events_ingest",
+            "task_id": "fetch_events",
+            "run_id": "manual__2026-10-22T19:33:49.798877+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "query_prometheus",
+          "arguments": {
+            "promql": "airflow_task_duration_bucket{dag_id=\"user_events_ingest\",task_id=\"fetch_events\"}"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "Read timed out upstream-mock"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 20,
+      "scenario": "resource_exhaustion",
+      "injection_id": 33,
+      "ground_truth": "resource_limit",
+      "expected_runbook": "rb-resource",
+      "injected_at": "2026-10-22T19:34:56.514491+00:00",
+      "incident_id": 41,
+      "timed_out": false,
+      "agent_root_cause": "resource_limit",
+      "agent_runbook": "rb-resource",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "resource_limit",
+      "baseline_runbook": "rb-resource",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 55.1,
+      "triage_seconds": 13.3,
+      "summary": "The `feature_build` pipeline failed because the `compute_features` task exceeded its memory limit and was terminated by the operating system.",
+      "evidence": [
+        "Task exited with return code -9. For more information, see https://airflow.apache.org/docs/apache-airflow/stable/troubleshooting.html#LocalTaskJob-killed"
+      ],
+      "suggested_action": "Increase the memory limit allocated to the task worker or optimize the memory footprint of the feature building script.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:34:57.022757+00:00",
+            "dag_id": "feature_build"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:34:57.022757+00:00",
+            "task_id": "compute_features",
+            "dag_id": "feature_build"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "exit code -9 OOM killed memory"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 21,
+      "scenario": "bad_code",
+      "injection_id": 34,
+      "ground_truth": "code_error",
+      "expected_runbook": "rb-code-error",
+      "injected_at": "2026-10-22T19:36:18.954445+00:00",
+      "incident_id": 43,
+      "timed_out": false,
+      "agent_root_cause": "code_error",
+      "agent_runbook": "rb-code-error",
+      "agent_confidence": 0.95,
+      "agent_steps": 3,
+      "baseline_root_cause": "code_error",
+      "baseline_runbook": "rb-code-error",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 48.1,
+      "triage_seconds": 13.8,
+      "summary": "The sales daily ETL pipeline failed because the cleaning task encountered a Python KeyError while trying to access the 'unit_price_usd' field in the incoming data.",
+      "evidence": [
+        "File \"/opt/airflow/dags/sales_daily_etl.py\", line 48, in clean",
+        "    price = float(row[price_field])",
+        "KeyError: 'unit_price_usd'"
+      ],
+      "suggested_action": "Check if the upstream data schema changed or update the pipeline code in sales_daily_etl.py to handle the expected column names.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:36:19.549307+00:00",
+            "task_id": "clean",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "KeyError: unit_price_usd"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 22,
+      "scenario": "disk_full",
+      "injection_id": 35,
+      "ground_truth": "storage_full",
+      "expected_runbook": "rb-disk-full",
+      "injected_at": "2026-10-22T19:37:41.257897+00:00",
+      "incident_id": 44,
+      "timed_out": false,
+      "agent_root_cause": "storage_full",
+      "agent_runbook": "rb-disk-full",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "storage_full",
+      "baseline_runbook": "rb-disk-full",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 45.6,
+      "triage_seconds": 18.6,
+      "summary": "The report export pipeline failed because the disk partition storing reports has run out of space, preventing the final report file from being written.",
+      "evidence": [
+        "Writing /opt/airflow/reports/sales_report_20261022T193741.csv (829059 bytes); volume /opt/airflow/reports free=0 bytes of 8388608",
+        "OSError: [Errno 28] No space left on device"
+      ],
+      "suggested_action": "Clean up older files in the reports volume or expand the disk storage, then retry the failed task.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "report_export",
+            "run_id": "manual__2026-10-22T19:37:41.665198+00:00",
+            "task_id": "write_report"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "No space left on device"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 23,
+      "scenario": "upstream_down",
+      "injection_id": 36,
+      "ground_truth": "dependency_unavailable",
+      "expected_runbook": "rb-upstream-down",
+      "injected_at": "2026-10-22T19:38:53.957502+00:00",
+      "incident_id": 45,
+      "timed_out": false,
+      "agent_root_cause": "dependency_unavailable",
+      "agent_runbook": "rb-upstream-down",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "dependency_unavailable",
+      "baseline_runbook": "rb-upstream-down",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 66.4,
+      "triage_seconds": 37.1,
+      "summary": "The `user_events_ingest` pipeline failed because the upstream events service returned an HTTP 503 Service Unavailable error during maintenance.",
+      "evidence": [
+        "19:39:06 INFO - Upstream responded 503 in 0.01s",
+        "19:39:06 ERROR - Upstream error body: {\"detail\":\"events service unavailable (maintenance)\"}",
+        "requests.exceptions.HTTPError: 503 Server Error: Service Unavailable for url: http://upstream-mock:8000/events?limit=200"
+      ],
+      "suggested_action": "Wait for the upstream service to finish maintenance and come back online, then retry the failed pipeline run.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "user_events_ingest",
+            "task_id": "fetch_events",
+            "run_id": "manual__2026-10-22T19:38:54.233756+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "503 Server Error Service Unavailable upstream-mock"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 24,
+      "scenario": "scheduler_down",
+      "injection_id": 37,
+      "ground_truth": "scheduler_unhealthy",
+      "expected_runbook": "rb-scheduler",
+      "injected_at": "2026-10-22T19:40:31.028281+00:00",
+      "incident_id": 48,
+      "timed_out": false,
+      "agent_root_cause": "scheduler_unhealthy",
+      "agent_runbook": "rb-scheduler",
+      "agent_confidence": 0.95,
+      "agent_steps": 4,
+      "baseline_root_cause": "scheduler_unhealthy",
+      "baseline_runbook": "rb-scheduler",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 97.3,
+      "triage_seconds": 30.3,
+      "summary": "The Airflow scheduler has stopped heartbeating, meaning no new task instances are being scheduled or run across any pipelines.",
+      "evidence": [
+        "\"scheduler\":{\"status\":\"unhealthy\",\"latest_heartbeat\":\"2026-10-22T19:40:29.372838+00:00\",\"seconds_since_heartbeat\":70}"
+      ],
+      "suggested_action": "Check the scheduler pod/container status and logs, then restart the scheduler.",
+      "tool_calls": [
+        {
+          "tool": "get_platform_status",
+          "arguments": {},
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "scheduler heartbeat missing"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-scheduler"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 25,
+      "scenario": "resource_exhaustion",
+      "injection_id": 38,
+      "ground_truth": "resource_limit",
+      "expected_runbook": "rb-resource",
+      "injected_at": "2026-10-22T19:42:54.685912+00:00",
+      "incident_id": 49,
+      "timed_out": false,
+      "agent_root_cause": "resource_limit",
+      "agent_runbook": "rb-resource",
+      "agent_confidence": 1.0,
+      "agent_steps": 4,
+      "baseline_root_cause": "resource_limit",
+      "baseline_runbook": "rb-resource",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 84.9,
+      "triage_seconds": 41.5,
+      "summary": "The feature_build pipeline failed because the compute_features task ran out of memory and was killed by the system.",
+      "evidence": [
+        "Task exited with return code -9. For more information, see https://airflow.apache.org/docs/apache-airflow/stable/troubleshooting.html#LocalTaskJob-killed"
+      ],
+      "suggested_action": "Increase the memory limit for the compute_features task or refactor the pipeline to process the data in smaller chunks.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "dag_id": "feature_build",
+            "run_id": "manual__2026-10-22T19:42:55.289885+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "compute_features",
+            "dag_id": "feature_build",
+            "run_id": "manual__2026-10-22T19:42:55.289885+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "return code -9 OOM killed memory limit"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-resource"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 26,
+      "scenario": "disk_full",
+      "injection_id": 39,
+      "ground_truth": "storage_full",
+      "expected_runbook": "rb-disk-full",
+      "injected_at": "2026-10-22T19:44:47.645997+00:00",
+      "incident_id": 50,
+      "timed_out": false,
+      "agent_root_cause": "storage_full",
+      "agent_runbook": "rb-disk-full",
+      "agent_confidence": 1.0,
+      "agent_steps": 3,
+      "baseline_root_cause": "storage_full",
+      "baseline_runbook": "rb-disk-full",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 60.2,
+      "triage_seconds": 24.5,
+      "summary": "The report export pipeline failed because the storage volume ran out of free space while attempting to write the CSV report.",
+      "evidence": [
+        "volume /opt/airflow/reports free=0 bytes of 8388608",
+        "OSError: [Errno 28] No space left on device"
+      ],
+      "suggested_action": "Clear out old reports or increase the volume storage limit for /opt/airflow/reports.",
+      "tool_calls": [
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "report_export",
+            "task_id": "write_report",
+            "run_id": "manual__2026-10-22T19:44:48.040637+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "No space left on device"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 27,
+      "scenario": "missing_input",
+      "injection_id": 40,
+      "ground_truth": "missing_upstream_data",
+      "expected_runbook": "rb-missing-input",
+      "injected_at": "2026-10-22T19:46:14.730537+00:00",
+      "incident_id": 51,
+      "timed_out": false,
+      "agent_root_cause": "missing_upstream_data",
+      "agent_runbook": "rb-missing-input",
+      "agent_confidence": 1.0,
+      "agent_steps": 5,
+      "baseline_root_cause": "missing_upstream_data",
+      "baseline_runbook": "rb-missing-input",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 76.7,
+      "triage_seconds": 28.4,
+      "summary": "The sales daily ETL pipeline failed because the expected input file (sales.csv) was missing from the incoming data directory. As a result, the extraction task and all subsequent downstream tasks could not run.",
+      "evidence": [
+        "Input file /opt/airflow/data/incoming/sales.csv does not exist. Files present in /opt/airflow/data/incoming: []",
+        "FileNotFoundError: Expected input file not found: /opt/airflow/data/incoming/sales.csv"
+      ],
+      "suggested_action": "Verify that the upstream producer has delivered the sales.csv file to /opt/airflow/data/incoming/ and re-run the pipeline once the file is present.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "run_id": "manual__2026-10-22T19:46:15.351961+00:00",
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "run_id": "manual__2026-10-22T19:46:15.351961+00:00",
+            "task_id": "extract"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "Expected input file not found sales.csv"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-missing-input"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 28,
+      "scenario": "scheduler_down",
+      "injection_id": 41,
+      "ground_truth": "scheduler_unhealthy",
+      "expected_runbook": "rb-scheduler",
+      "injected_at": "2026-10-22T19:48:06.972708+00:00",
+      "incident_id": 52,
+      "timed_out": false,
+      "agent_root_cause": "scheduler_unhealthy",
+      "agent_runbook": "rb-scheduler",
+      "agent_confidence": 0.95,
+      "agent_steps": 5,
+      "baseline_root_cause": "scheduler_unhealthy",
+      "baseline_runbook": "rb-scheduler",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 74.6,
+      "triage_seconds": 13.7,
+      "summary": "The Airflow scheduler has stopped heartbeating, meaning the platform cannot schedule or execute any new pipeline tasks.",
+      "evidence": [
+        "{\"scheduler\": {\"status\": \"unhealthy\", \"latest_heartbeat\": \"2026-10-22T19:48:02.048211+00:00\", \"seconds_since_heartbeat\": 67}}"
+      ],
+      "suggested_action": "Check the scheduler container status and logs, then restart the Airflow scheduler process or pod.",
+      "tool_calls": [
+        {
+          "tool": "get_platform_status",
+          "arguments": {},
+          "error": null
+        },
+        {
+          "tool": "query_prometheus",
+          "arguments": {
+            "promql": "airflow_scheduler_heartbeat"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "scheduler heartbeat missing"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-scheduler"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 29,
+      "scenario": "bad_connection",
+      "injection_id": 42,
+      "ground_truth": "credentials_or_connection",
+      "expected_runbook": "rb-connection",
+      "injected_at": "2026-10-22T19:49:56.454512+00:00",
+      "incident_id": 53,
+      "timed_out": false,
+      "agent_root_cause": "credentials_or_connection",
+      "agent_runbook": "rb-connection",
+      "agent_confidence": 1.0,
+      "agent_steps": 5,
+      "baseline_root_cause": "credentials_or_connection",
+      "baseline_runbook": "rb-connection",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 124.5,
+      "triage_seconds": 27.8,
+      "summary": "The daily sales data loading task failed because the warehouse database rejected the password authentication for the configured user.",
+      "evidence": [
+        "psycopg2.OperationalError: connection to server at \"postgres\" (172.22.0.2), port 5432 failed: FATAL:  password authentication failed for user \"warehouse\""
+      ],
+      "suggested_action": "Check and update the Airflow connection 'warehouse_db_v2' with the correct password, then test the connection and clear/rerun the failed task.",
+      "tool_calls": [
+        {
+          "tool": "get_dag_run",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "run_id": "manual__2026-10-22T19:49:57.232678+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "task_id": "load",
+            "try_number": 2,
+            "dag_id": "sales_daily_etl",
+            "run_id": "manual__2026-10-22T19:49:57.232678+00:00"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "password authentication failed"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-connection"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    },
+    {
+      "run": 30,
+      "scenario": "bad_connection",
+      "injection_id": 43,
+      "ground_truth": "credentials_or_connection",
+      "expected_runbook": "rb-connection",
+      "injected_at": "2026-10-22T19:52:34.278661+00:00",
+      "incident_id": 54,
+      "timed_out": false,
+      "agent_root_cause": "credentials_or_connection",
+      "agent_runbook": "rb-connection",
+      "agent_confidence": 1.0,
+      "agent_steps": 5,
+      "baseline_root_cause": "credentials_or_connection",
+      "baseline_runbook": "rb-connection",
+      "agent_cause_correct": true,
+      "agent_runbook_correct": true,
+      "baseline_cause_correct": true,
+      "baseline_runbook_correct": true,
+      "end_to_end_seconds": 89.1,
+      "triage_seconds": 60.2,
+      "summary": "The sales_daily_etl pipeline failed because the database connection rejected the credentials for the user 'warehouse' during the load task.",
+      "evidence": [
+        "psycopg2.OperationalError: connection to server at \"postgres\" (172.22.0.2), port 5432 failed: FATAL:  password authentication failed for user \"warehouse\""
+      ],
+      "suggested_action": "Check and update the Airflow connection 'warehouse_db_v2' with the correct password for user 'warehouse', test the connection, and then retry the failed task.",
+      "tool_calls": [
+        {
+          "tool": "list_recent_failures",
+          "arguments": {
+            "since_minutes": 60,
+            "dag_id": "sales_daily_etl"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_task_logs",
+          "arguments": {
+            "dag_id": "sales_daily_etl",
+            "run_id": "manual__2026-10-22T19:52:35.012596+00:00",
+            "task_id": "load"
+          },
+          "error": null
+        },
+        {
+          "tool": "search_runbooks",
+          "arguments": {
+            "query": "password authentication failed"
+          },
+          "error": null
+        },
+        {
+          "tool": "get_runbook",
+          "arguments": {
+            "runbook_id": "rb-connection"
+          },
+          "error": null
+        }
+      ],
+      "agent_error": null
+    }
+  ]
+}
